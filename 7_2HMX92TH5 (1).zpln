@@ -1,0 +1,1397 @@
+﻿{
+  "paragraphs": [
+    {
+      "text": "%md\n\nИсточник данных https://www.kaggle.com/yamaerenay/spotify-dataset-19212020-600k-tracks\n\nИспользуется только файл tracks.csv",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-15T12:12:08+0300",
+      "progress": 0,
+      "config": {
+        "tableHide": true,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": false,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Источник данных <a href=\"https://www.kaggle.com/yamaerenay/spotify-dataset-19212020-600k-tracks\">https://www.kaggle.com/yamaerenay/spotify-dataset-19212020-600k-tracks</a></p>\n<p>Используется только файл tracks.csv</p>\n\n</div>"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528252_1114002821",
+      "id": "20210421-055036_707153735",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "status": "READY",
+      "focus": true,
+      "$$hashKey": "object:1390"
+    },
+    {
+      "text": "%md\n\nКак менялись аудиохарактеристики песен с годами? Имеются в виду \"acousticness\",\"danceability\",\"energy\",\"speechiness\",\"liveness\",\"valence\"\n\nКак изменялось с годами \"производительность\" артистов (количество песен, выпущенных за определенное время)?\n\nКакие артисты выпустили наибольшее чисто песен из годового топ-100 по популярности?\n\nКакие артисты чаще других попадали в годовой топ-100 песен по популярности?\n\nКакие артисты дольше других держались в ежегодном топ-100 песен по популярности?\n\nДля каждой аудиохарактеристики вывести топ 3 артистов по среднему значению каждой аудиохарактеристики его песен. Дополнительно: отнормировать на среднее значение аудиохарактеристики в год выхода песен.\n\nКак изменилось влияние отдельных аудиохарактеристик на популярность песен в 2010-е годы по сравнению с 1980ми? Возможное решение -- посмотроить модель линейной регрессии и посмотреть коэффициенты",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-16T16:00:14+0300",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Как менялись аудиохарактеристики песен с годами? Имеются в виду &ldquo;acousticness&rdquo;,&ldquo;danceability&rdquo;,&ldquo;energy&rdquo;,&ldquo;speechiness&rdquo;,&ldquo;liveness&rdquo;,&ldquo;valence&rdquo;</p>\n<p>Как изменялось с годами &ldquo;производительность&rdquo; артистов (количество песен, выпущенных за определенное время)?</p>\n<p>Какие артисты выпустили наибольшее чисто песен из годового топ-100 по популярности?</p>\n<p>Какие артисты чаще других попадали в годовой топ-100 песен по популярности?</p>\n<p>Какие артисты дольше других держались в ежегодном топ-100 песен по популярности?</p>\n<p>Для каждой аудиохарактеристики вывести топ 3 артистов по среднему значению каждой аудиохарактеристики его песен. Дополнительно: отнормировать на среднее значение аудиохарактеристики в год выхода песен.</p>\n<p>Как изменилось влияние отдельных аудиохарактеристик на популярность песен в 2010-е годы по сравнению с 1980ми? Возможное решение &ndash; посмотроить модель линейной регрессии и посмотреть коэффициенты</p>\n\n</div>"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528252_132710485",
+      "id": "20210420-213050_2084295532",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "dateStarted": "2022-11-16T16:00:14+0300",
+      "dateFinished": "2022-11-16T16:00:14+0300",
+      "status": "FINISHED",
+      "$$hashKey": "object:1391"
+    },
+    {
+      "text": "%pyspark\n\nimport pyspark.sql.functions as f\nfrom pyspark.sql.functions import col, substring, from_json, explode, split, regexp_replace\nfrom pyspark.sql.types import *\n\nsch=ArrayType(StringType());\n\n# важно что разделитель ', ' с пробелом, иначе пробелы добавятся в значения\ntracks = spark.read.option(\"header\", \"true\") \\\n        .option(\"escape\", '\"') \\\n        .option(\"InferSchema\", \"true\") \\\n        .csv(\"/data/tracks.csv\") \\\n        .withColumn(\"release_year\", substring(\"release_date\", 1, 4).cast(IntegerType()))\\\n        .withColumn(\"array_artist\", split(regexp_replace(col(\"artists\"), \"[\\]\\[\\']\", \"\"),\", \")) \\\n        .cache() #выделяем год в отдельную колонку и преобразуем колонку с артистами в массив\n\ntracks_exp=tracks.select(  \n                            \"name\", \n                            \"popularity\",\n                            \"danceability\",\n                            \"energy\",\n                            \"speechiness\",\n                            \"acousticness\",\n                            \"liveness\",\n                            \"valence\",\n                            \"release_year\",\n                            \"artists\",\n                            explode( col(\"array_artist\") ).alias(\"name_artist\")\n                        ) #создаем отдельную таблицу с развернутым массивом артистов\n                        \ntracks_exp.printSchema()\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-17T12:24:25+0300",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "root\n |-- name: string (nullable = true)\n |-- popularity: integer (nullable = true)\n |-- danceability: double (nullable = true)\n |-- energy: double (nullable = true)\n |-- speechiness: double (nullable = true)\n |-- acousticness: double (nullable = true)\n |-- liveness: double (nullable = true)\n |-- valence: double (nullable = true)\n |-- release_year: integer (nullable = true)\n |-- artists: string (nullable = true)\n |-- name_artist: string (nullable = true)\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=0",
+              "$$hashKey": "object:16358"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=1",
+              "$$hashKey": "object:16359"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528252_1320701375",
+      "id": "20210420-205035_862021141",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "dateStarted": "2022-11-17T12:24:25+0300",
+      "dateFinished": "2022-11-17T12:25:03+0300",
+      "status": "FINISHED",
+      "$$hashKey": "object:1392"
+    },
+    {
+      "text": "%pyspark\n\n#Далее работаем с таблицей tracks_exp\n\nz.show(tracks_exp)\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-15T13:44:52+0300",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "name": "string",
+                      "popularity": "string",
+                      "danceability": "string",
+                      "energy": "string",
+                      "speechiness": "string",
+                      "acousticness": "string",
+                      "liveness": "string",
+                      "valence": "string",
+                      "release_year": "string",
+                      "artists": "string",
+                      "name_artist": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                },
+                "multiBarChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                }
+              },
+              "commonSetting": {},
+              "keys": [
+                {
+                  "name": "name",
+                  "index": 0,
+                  "aggr": "sum"
+                }
+              ],
+              "groups": [],
+              "values": [
+                {
+                  "name": "popularity",
+                  "index": 1,
+                  "aggr": "sum"
+                }
+              ]
+            },
+            "helium": {}
+          },
+          "1": {
+            "graph": {
+              "mode": "table",
+              "height": 300,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "name": "string",
+                      "popularity": "string",
+                      "danceability": "string",
+                      "energy": "string",
+                      "speechiness": "string",
+                      "acousticness": "string",
+                      "liveness": "string",
+                      "valence": "string",
+                      "release_year": "string",
+                      "artists": "string",
+                      "name_artist": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "name\tpopularity\tdanceability\tenergy\tspeechiness\tacousticness\tliveness\tvalence\trelease_year\tartists\tname_artist\nCarve\t6\t0.645\t0.445\t0.451\t0.674\t0.151\t0.127\t1922\t['Uli']\tUli\nCapítulo 2.16 - Banquero Anarquista\t0\t0.695\t0.263\t0.957\t0.797\t0.148\t0.655\t1922\t['Fernando Pessoa']\tFernando Pessoa\nVivo para Quererte - Remasterizado\t0\t0.434\t0.177\t0.0512\t0.994\t0.212\t0.457\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nEl Prisionero - Remasterizado\t0\t0.321\t0.0946\t0.0504\t0.995\t0.104\t0.397\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nLady of the Evening\t0\t0.402\t0.158\t0.039\t0.989\t0.311\t0.196\t1922\t['Dick Haymes']\tDick Haymes\nAve Maria\t0\t0.227\t0.261\t0.0382\t0.994\t0.0977\t0.0539\t1922\t['Dick Haymes']\tDick Haymes\nLa Butte Rouge\t0\t0.51\t0.355\t0.124\t0.965\t0.155\t0.727\t1922\t['Francis Marty']\tFrancis Marty\nLa Java\t0\t0.563\t0.184\t0.0512\t0.993\t0.325\t0.654\t1922\t['Mistinguett']\tMistinguett\nOld Fashioned Girl\t0\t0.488\t0.475\t0.0399\t0.62\t0.107\t0.544\t1922\t['Greg Fieler']\tGreg Fieler\nMartín Fierro - Remasterizado\t0\t0.548\t0.0391\t0.153\t0.996\t0.148\t0.612\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nCapítulo 2.8 - Banquero Anarquista\t0\t0.676\t0.235\t0.96\t0.794\t0.21\t0.724\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.25 - Banquero Anarquista\t0\t0.75\t0.229\t0.955\t0.578\t0.314\t0.531\t1922\t['Fernando Pessoa']\tFernando Pessoa\nLazy Boi\t0\t0.298\t0.46\t0.453\t0.521\t0.436\t0.402\t1922\t['Uli']\tUli\nTu Verras Montmartre\t1\t0.703\t0.28\t0.174\t0.995\t0.163\t0.897\t1922\t['Lucien Boyer']\tLucien Boyer\nElle Prend L'boulevard Magenta\t0\t0.709\t0.289\t0.18\t0.967\t0.119\t0.84\t1922\t['Félix Mayol']\tFélix Mayol\nCapítulo 1.23 - Banquero Anarquista\t0\t0.687\t0.198\t0.962\t0.754\t0.197\t0.478\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.18 - Banquero Anarquista\t0\t0.8\t0.171\t0.953\t0.67\t0.123\t0.693\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.10 - Banquero Anarquista\t0\t0.7\t0.208\t0.956\t0.691\t0.441\t0.613\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCa C'est Une Chose\t0\t0.352\t0.334\t0.0594\t0.996\t0.36\t0.414\t1922\t['Victor Boucher']\tVictor Boucher\nEl Vendaval - Remasterizado\t0\t0.37\t0.372\t0.0865\t0.985\t0.929\t0.753\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nTa Bouche\t0\t0.335\t0.304\t0.0506\t0.996\t0.102\t0.215\t1922\t['Jeanne Saint Bonnet']\tJeanne Saint Bonnet\nCapítulo 1.22 - Banquero Anarquista\t0\t0.704\t0.244\t0.959\t0.728\t0.168\t0.644\t1922\t['Fernando Pessoa']\tFernando Pessoa\nLa Maleva - Remasterizado\t0\t0.339\t0.0958\t0.053\t0.994\t0.123\t0.219\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nCapítulo 2.3 - Banquero Anarquista\t0\t0.655\t0.214\t0.962\t0.665\t0.279\t0.761\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.2 - Banquero Anarquista\t0\t0.673\t0.239\t0.96\t0.539\t0.633\t0.644\t1922\t['Fernando Pessoa']\tFernando Pessoa\nJ'ai Vendu Mon Âme\t0\t0.582\t0.152\t0.0914\t0.972\t0.31\t0.546\t1922\t['Adolphe Bérard']\tAdolphe Bérard\nNuits De Chine\t4\t0.42\t0.288\t0.0701\t0.994\t0.196\t0.4\t1922\t['Louis Lynel']\tLouis Lynel\nEn la Huella del Querer - Remasterizado\t0\t0.373\t0.176\t0.0703\t0.994\t0.157\t0.383\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nC'est La Mode Et Voila Tout\t0\t0.592\t0.408\t0.271\t0.993\t0.413\t0.766\t1922\t['Perchicot']\tPerchicot\nChapter 1.6 - Szkolne przygody Pimpusia Sadełko\t0\t0.749\t0.289\t0.952\t0.652\t0.129\t0.326\t1922\t['Maria Konopnicka']\tMaria Konopnicka\nLa Ronde De Nuit\t0\t0.55\t0.31\t0.168\t0.992\t0.204\t0.568\t1922\t['Perchicot']\tPerchicot\nEl Patotero Sentimental - Remasterizado\t0\t0.482\t0.0283\t0.0732\t0.996\t0.0989\t0.33\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nThe Dear Little Shamrock\t0\t0.347\t0.197\t0.0504\t0.991\t0.196\t0.246\t1922\t['Dick Haymes']\tDick Haymes\nTus Suspiros - Remasterizado\t0\t0.273\t0.318\t0.0694\t0.974\t0.778\t0.414\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nOjos Funestos - Remasterizado\t0\t0.373\t0.244\t0.0538\t0.993\t0.214\t0.623\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nCapítulo 2.20 - Banquero Anarquista\t0\t0.717\t0.202\t0.967\t0.7\t0.294\t0.683\t1922\t['Fernando Pessoa']\tFernando Pessoa\nAnd Mimi\t0\t0.284\t0.223\t0.0453\t0.98\t0.345\t0.226\t1922\t['Dick Haymes', 'Gordon Jenkins', 'His Orchestra']\tDick Haymes\nAnd Mimi\t0\t0.284\t0.223\t0.0453\t0.98\t0.345\t0.226\t1922\t['Dick Haymes', 'Gordon Jenkins', 'His Orchestra']\tGordon Jenkins\nAnd Mimi\t0\t0.284\t0.223\t0.0453\t0.98\t0.345\t0.226\t1922\t['Dick Haymes', 'Gordon Jenkins', 'His Orchestra']\tHis Orchestra\nHow High the Moon\t0\t0.328\t0.307\t0.0484\t0.989\t0.21\t0.259\t1922\t['Dick Haymes', 'Harry James', 'His Orchestra']\tDick Haymes\nHow High the Moon\t0\t0.328\t0.307\t0.0484\t0.989\t0.21\t0.259\t1922\t['Dick Haymes', 'Harry James', 'His Orchestra']\tHarry James\nHow High the Moon\t0\t0.328\t0.307\t0.0484\t0.989\t0.21\t0.259\t1922\t['Dick Haymes', 'Harry James', 'His Orchestra']\tHis Orchestra\nEl Huerfano - Remasterizado\t0\t0.462\t0.119\t0.0793\t0.996\t0.0773\t0.407\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nPas Pour Moi\t0\t0.532\t0.375\t0.298\t0.995\t0.276\t0.508\t1922\t['Maurice Chevalier']\tMaurice Chevalier\nCapítulo 1.16 - Banquero Anarquista\t0\t0.717\t0.242\t0.947\t0.679\t0.318\t0.565\t1922\t['Fernando Pessoa']\tFernando Pessoa\nLa Canción del Cabaret - Remasterizado\t0\t0.458\t0.178\t0.0614\t0.992\t0.413\t0.286\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nÉléonore\t0\t0.52\t0.262\t0.132\t0.994\t0.227\t0.575\t1922\t['Dréan']\tDréan\nEn Douce\t0\t0.427\t0.18\t0.067\t0.989\t0.128\t0.431\t1922\t['Mistinguett']\tMistinguett\nCapítulo 1.13 - Banquero Anarquista\t0\t0.721\t0.127\t0.95\t0.817\t0.178\t0.628\t1922\t['Fernando Pessoa']\tFernando Pessoa\nMarta\t0\t0.255\t0.343\t0.0305\t0.987\t0.326\t0.313\t1922\t['Dick Haymes']\tDick Haymes\nCarol of the Bells\t0\t0.382\t0.75\t0.0742\t0.123\t0.725\t0.346\t1922\t['Grandcubby Trio']\tGrandcubby Trio\nMachinalement\t0\t0.457\t0.193\t0.0655\t0.996\t0.0809\t0.671\t1922\t['Victor Boucher']\tVictor Boucher\nCapítulo 2.19 - Banquero Anarquista\t0\t0.729\t0.211\t0.957\t0.769\t0.556\t0.728\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.12 - Banquero Anarquista\t0\t0.741\t0.213\t0.962\t0.619\t0.534\t0.719\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.21 - Banquero Anarquista\t0\t0.685\t0.257\t0.955\t0.563\t0.112\t0.642\t1922\t['Fernando Pessoa']\tFernando Pessoa\nChicago (That Toddlin' Town)\t0\t0.491\t0.439\t0.105\t0.626\t0.321\t0.792\t1922\t['Jim Chapman']\tJim Chapman\nMi Guitarra - Remasterizado\t0\t0.236\t0.124\t0.0515\t0.995\t0.149\t0.409\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nPracticante - Remasterizado\t0\t0.43\t0.168\t0.0622\t0.995\t0.246\t0.437\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 1.5 - Szkolne przygody Pimpusia Sadełko\t0\t0.714\t0.211\t0.956\t0.629\t0.12\t0.311\t1922\t['Maria Konopnicka']\tMaria Konopnicka\nToda Alma - Remasterizado\t0\t0.545\t0.268\t0.191\t0.995\t0.112\t0.648\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nL'amour Au Clair De Lune\t0\t0.467\t0.328\t0.0354\t0.991\t0.0705\t0.701\t1922\t['Adolphe Bérard']\tAdolphe Bérard\nNo Me Olvides - Remasterizado\t0\t0.484\t0.0558\t0.0575\t0.996\t0.202\t0.636\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nCapítulo 2.7 - Banquero Anarquista\t0\t0.673\t0.237\t0.962\t0.813\t0.234\t0.544\t1922\t['Fernando Pessoa']\tFernando Pessoa\nTill the End of Time\t0\t0.208\t0.234\t0.0426\t0.986\t0.234\t0.209\t1922\t['Dick Haymes']\tDick Haymes\nComo una Flor - Remasterizado\t0\t0.218\t0.394\t0.0388\t0.981\t0.505\t0.749\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nCapítulo 1.12 - Banquero Anarquista\t0\t0.751\t0.173\t0.951\t0.683\t0.128\t0.594\t1922\t['Fernando Pessoa']\tFernando Pessoa\nSketch\t0\t0.634\t0.00399\t0.0377\t0.926\t0.105\t0.396\t1922\t['Uli']\tUli\nSin Amor - Remasterizado\t0\t0.543\t0.424\t0.269\t0.99\t0.861\t0.659\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nCapítulo 1.8 - Banquero Anarquista\t0\t0.715\t0.204\t0.943\t0.581\t0.169\t0.565\t1922\t['Fernando Pessoa']\tFernando Pessoa\nFlor Marchita - Remasterizado\t0\t0.36\t0.0954\t0.064\t0.994\t0.107\t0.344\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 1.7 - Szkolne przygody Pimpusia Sadełko\t0\t0.642\t0.212\t0.951\t0.635\t0.107\t0.334\t1922\t['Maria Konopnicka']\tMaria Konopnicka\nCapítulo 2.13 - Banquero Anarquista\t0\t0.721\t0.218\t0.941\t0.596\t0.426\t0.557\t1922\t['Fernando Pessoa']\tFernando Pessoa\nChapter 1.1 - Szkolne przygody Pimpusia Sadełko\t0\t0.66\t0.211\t0.96\t0.738\t0.118\t0.272\t1922\t['Maria Konopnicka']\tMaria Konopnicka\nCapítulo 1.14 - Banquero Anarquista\t0\t0.721\t0.196\t0.939\t0.643\t0.226\t0.587\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.21 - Banquero Anarquista\t0\t0.625\t0.187\t0.963\t0.831\t0.424\t0.576\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.4 - Banquero Anarquista\t0\t0.732\t0.176\t0.966\t0.623\t0.442\t0.771\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.14 - Banquero Anarquista\t0\t0.827\t0.258\t0.956\t0.658\t0.316\t0.73\t1922\t['Fernando Pessoa']\tFernando Pessoa\nThe Girl That I Marry\t0\t0.185\t0.151\t0.0391\t0.985\t0.151\t0.135\t1922\t['Dick Haymes']\tDick Haymes\nCapítulo 1.7 - Banquero Anarquista\t0\t0.735\t0.244\t0.956\t0.666\t0.253\t0.618\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.9 - Banquero Anarquista\t0\t0.619\t0.173\t0.967\t0.73\t0.145\t0.653\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.9 - Banquero Anarquista\t0\t0.768\t0.232\t0.962\t0.593\t0.304\t0.591\t1922\t['Fernando Pessoa']\tFernando Pessoa\nEntrerriana - Remasterizado\t0\t0.431\t0.2\t0.0322\t0.995\t0.139\t0.543\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nPobre Cotorro - Remasterizado\t0\t0.564\t0.053\t0.127\t0.996\t0.117\t0.407\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nMirage\t0\t0.497\t0.218\t0.0345\t0.992\t0.311\t0.56\t1922\t['Adolphe Bérard']\tAdolphe Bérard\nUn Placer - Remasterizado\t0\t0.527\t0.142\t0.0612\t0.996\t0.113\t0.896\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nLe Tango Neurasthénique\t0\t0.564\t0.433\t0.356\t0.979\t0.226\t0.601\t1922\t['Georgius']\tGeorgius\nCapítulo 2.17 - Banquero Anarquista\t0\t0.695\t0.186\t0.957\t0.748\t0.289\t0.598\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.10 - Banquero Anarquista\t0\t0.702\t0.2\t0.961\t0.642\t0.36\t0.773\t1922\t['Fernando Pessoa']\tFernando Pessoa\nAll Or Nothing at All\t0\t0.237\t0.555\t0.0401\t0.812\t0.366\t0.292\t1922\t['Dick Haymes', 'Harry James', 'His Orchestra']\tDick Haymes\nAll Or Nothing at All\t0\t0.237\t0.555\t0.0401\t0.812\t0.366\t0.292\t1922\t['Dick Haymes', 'Harry James', 'His Orchestra']\tHarry James\nAll Or Nothing at All\t0\t0.237\t0.555\t0.0401\t0.812\t0.366\t0.292\t1922\t['Dick Haymes', 'Harry James', 'His Orchestra']\tHis Orchestra\nKeepsakes\t0\t0.176\t0.358\t0.0459\t0.989\t0.102\t0.111\t1922\t['Dick Haymes']\tDick Haymes\nCapítulo 1.5 - Banquero Anarquista\t0\t0.773\t0.155\t0.963\t0.591\t0.13\t0.494\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.2 - Banquero Anarquista\t0\t0.646\t0.26\t0.963\t0.757\t0.226\t0.656\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.11 - Banquero Anarquista\t0\t0.78\t0.18\t0.963\t0.676\t0.63\t0.788\t1922\t['Fernando Pessoa']\tFernando Pessoa\nI Ought to Know More About You\t0\t0.607\t0.253\t0.0414\t0.989\t0.225\t0.555\t1922\t['Dick Haymes']\tDick Haymes\nPobre Madrecita - Remasterizado\t0\t0.53\t0.147\t0.0663\t0.996\t0.114\t0.552\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nPrimera Ilusión - Remasterizado\t0\t0.388\t0.202\t0.0517\t0.993\t0.111\t0.83\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nCapítulo 1.1 - Banquero Anarquista\t0\t0.634\t0.237\t0.961\t0.482\t0.152\t0.634\t1922\t['Fernando Pessoa']\tFernando Pessoa\nSoft Lights and Sweet Music\t0\t0.328\t0.323\t0.0331\t0.985\t0.357\t0.153\t1922\t['Dick Haymes']\tDick Haymes\nChapter 1.4 - Szkolne przygody Pimpusia Sadełko\t0\t0.697\t0.221\t0.956\t0.597\t0.335\t0.393\t1922\t['Maria Konopnicka']\tMaria Konopnicka\nElle Vendait Des P'tits Gateaux\t0\t0.716\t0.301\t0.105\t0.987\t0.277\t0.969\t1922\t['Félix Mayol']\tFélix Mayol\nHush-A-Bye (Wee Rose of Kilarney)\t0\t0.279\t0.128\t0.0406\t0.994\t0.116\t0.145\t1922\t['Dick Haymes', 'Victor Young', 'His Orchestra']\tDick Haymes\nHush-A-Bye (Wee Rose of Kilarney)\t0\t0.279\t0.128\t0.0406\t0.994\t0.116\t0.145\t1922\t['Dick Haymes', 'Victor Young', 'His Orchestra']\tVictor Young\nHush-A-Bye (Wee Rose of Kilarney)\t0\t0.279\t0.128\t0.0406\t0.994\t0.116\t0.145\t1922\t['Dick Haymes', 'Victor Young', 'His Orchestra']\tHis Orchestra\nCapítulo 2.23 - Banquero Anarquista\t0\t0.714\t0.219\t0.954\t0.52\t0.222\t0.54\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCap Polonio - Remasterizado\t0\t0.541\t0.161\t0.094\t0.996\t0.129\t0.708\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 1.3 - Szkolne przygody Pimpusia Sadełko\t0\t0.624\t0.213\t0.958\t0.764\t0.151\t0.382\t1922\t['Maria Konopnicka']\tMaria Konopnicka\nSerenade of the Bells\t0\t0.269\t0.255\t0.0536\t0.984\t0.178\t0.154\t1922\t['Dick Haymes']\tDick Haymes\nMes Parents Sont Venus Me Chercher\t0\t0.554\t0.204\t0.0598\t0.995\t0.153\t0.62\t1922\t['Fortugé']\tFortugé\nAs If I Didn't Have Enough On My Mind\t0\t0.32\t0.246\t0.0463\t0.991\t0.419\t0.312\t1922\t['Dick Haymes']\tDick Haymes\nCapítulo 2.22 - Banquero Anarquista\t0\t0.677\t0.314\t0.963\t0.334\t0.603\t0.486\t1922\t['Fernando Pessoa']\tFernando Pessoa\nDe Mil Amores - Remasterizado\t0\t0.442\t0.177\t0.0571\t0.994\t0.491\t0.562\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nCachonguita - Remasterizado\t0\t0.45\t0.0522\t0.0583\t0.996\t0.158\t0.413\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nL'enfer\t0\t0.657\t0.325\t0.254\t0.199\t0.0931\t0.105\t1922\t['Uli']\tUli\nMetejón - Remasterizado\t0\t0.493\t0.0763\t0.0612\t0.996\t0.169\t0.683\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nWhen a Gypsy Makes a Violin Cry\t0\t0.31\t0.342\t0.0415\t0.958\t0.371\t0.111\t1922\t['Dick Haymes']\tDick Haymes\nCapítulo 1.17 - Banquero Anarquista\t0\t0.736\t0.216\t0.959\t0.649\t0.465\t0.492\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.3 - Banquero Anarquista\t0\t0.723\t0.22\t0.932\t0.532\t0.136\t0.595\t1922\t['Fernando Pessoa']\tFernando Pessoa\nRemembranza - Remasterizado\t0\t0.53\t0.0468\t0.0853\t0.996\t0.0982\t0.42\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nGraphite\t0\t0.644\t0.684\t0.199\t0.144\t0.0847\t0.138\t1922\t['Uli']\tUli\nCapítulo 2.24 - Banquero Anarquista\t0\t0.632\t0.217\t0.963\t0.525\t0.149\t0.605\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.24 - Banquero Anarquista\t0\t0.62\t0.187\t0.962\t0.845\t0.138\t0.729\t1922\t['Fernando Pessoa']\tFernando Pessoa\nMéfiez Vous D'anatole\t0\t0.625\t0.35\t0.312\t0.984\t0.0988\t0.808\t1922\t['Georgius']\tGeorgius\nEnsueño de Oro - Remasterizado\t0\t0.43\t0.155\t0.116\t0.995\t0.202\t0.564\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nHush Little Darlin'\t0\t0.328\t0.201\t0.0408\t0.985\t0.113\t0.31\t1922\t['Dick Haymes']\tDick Haymes\nCapítulo 2.5 - Banquero Anarquista\t0\t0.714\t0.2\t0.965\t0.5\t0.246\t0.589\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.26 & Capítulo 2.1 - Banquero Anarquista\t0\t0.661\t0.225\t0.966\t0.865\t0.239\t0.692\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.11 - Banquero Anarquista\t0\t0.718\t0.221\t0.949\t0.728\t0.152\t0.538\t1922\t['Fernando Pessoa']\tFernando Pessoa\nEl Huerfano - Remasterizado\t0\t0.366\t0.0749\t0.0806\t0.996\t0.117\t0.515\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nJ'en Ai Marre\t0\t0.511\t0.206\t0.0592\t0.995\t0.418\t0.481\t1922\t['Mistinguett']\tMistinguett\nNostalgia - Remasterizado\t0\t0.496\t0.158\t0.0423\t0.995\t0.206\t0.347\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 1.2 - Szkolne przygody Pimpusia Sadełko\t0\t0.688\t0.207\t0.956\t0.731\t0.122\t0.416\t1922\t['Maria Konopnicka']\tMaria Konopnicka\nMonigote - Remasterizado\t0\t0.422\t0.561\t0.461\t0.98\t0.966\t0.528\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nEl Beso de la Muerte - Remasterizado\t0\t0.493\t0.0997\t0.0607\t0.996\t0.192\t0.587\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nLe Petit Amant\t0\t0.656\t0.283\t0.191\t0.996\t0.155\t0.67\t1922\t['Jeanne Saint Bonnet']\tJeanne Saint Bonnet\nRecuerdo Criollo - Remasterizado\t0\t0.313\t0.102\t0.0436\t0.985\t0.102\t0.312\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nDespedida - Remasterizado\t0\t0.425\t0.308\t0.0534\t0.98\t0.631\t0.509\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nYou'll Never Know\t0\t0.392\t0.128\t0.0378\t0.994\t0.0983\t0.226\t1922\t['Dick Haymes', 'The Pied Pipers']\tDick Haymes\nYou'll Never Know\t0\t0.392\t0.128\t0.0378\t0.994\t0.0983\t0.226\t1922\t['Dick Haymes', 'The Pied Pipers']\tThe Pied Pipers\nCar Loans\t0\t0.651\t0.574\t0.104\t0.474\t0.0597\t0.412\t1922\t['Uli']\tUli\nCapítulo 1.4 - Banquero Anarquista\t0\t0.657\t0.181\t0.963\t0.727\t0.456\t0.538\t1922\t['Fernando Pessoa']\tFernando Pessoa\nLa Muchacha - Remasterizado\t0\t0.323\t0.106\t0.0483\t0.992\t0.182\t0.255\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nStardust\t0\t0.208\t0.226\t0.0331\t0.985\t0.219\t0.22\t1922\t['Dick Haymes']\tDick Haymes\nPobre Gaucho - Remasterizado\t0\t0.476\t0.131\t0.0523\t0.995\t0.102\t0.635\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nEl Poder de Tus Ojos - Remasterizado\t0\t0.357\t0.244\t0.0478\t0.993\t0.274\t0.559\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nCapítulo 1.25 - Banquero Anarquista\t0\t0.728\t0.162\t0.965\t0.872\t0.176\t0.734\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.6 - Banquero Anarquista\t0\t0.769\t0.205\t0.965\t0.716\t0.362\t0.611\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.15 - Banquero Anarquista\t0\t0.646\t0.189\t0.964\t0.653\t0.284\t0.5\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.20 - Banquero Anarquista\t0\t0.757\t0.217\t0.959\t0.693\t0.208\t0.5\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 1.6 - Banquero Anarquista\t0\t0.755\t0.152\t0.962\t0.647\t0.134\t0.487\t1922\t['Fernando Pessoa']\tFernando Pessoa\nCapítulo 2.18 - Banquero Anarquista\t0\t0.69\t0.177\t0.959\t0.672\t0.272\t0.683\t1922\t['Fernando Pessoa']\tFernando Pessoa\nPobre China - Remasterizado\t0\t0.564\t0.178\t0.0432\t0.995\t0.112\t0.706\t1922\t['Ignacio Corsini']\tIgnacio Corsini\nAntoine\t0\t0.537\t0.153\t0.0898\t0.994\t0.419\t0.558\t1922\t['Fortugé']\tFortugé\nCapítulo 1.19 - Banquero Anarquista\t0\t0.738\t0.19\t0.963\t0.796\t0.146\t0.641\t1922\t['Fernando Pessoa']\tFernando Pessoa\nEverytime I Meet You\t0\t0.295\t0.277\t0.0346\t0.989\t0.194\t0.174\t1922\t['Dick Haymes', 'Gordon Jenkins', 'His Orchestra']\tDick Haymes\nEverytime I Meet You\t0\t0.295\t0.277\t0.0346\t0.989\t0.194\t0.174\t1922\t['Dick Haymes', 'Gordon Jenkins', 'His Orchestra']\tGordon Jenkins\nEverytime I Meet You\t0\t0.295\t0.277\t0.0346\t0.989\t0.194\t0.174\t1922\t['Dick Haymes', 'Gordon Jenkins', 'His Orchestra']\tHis Orchestra\nCapítulo 2.15 - Banquero Anarquista\t0\t0.723\t0.221\t0.957\t0.711\t0.218\t0.693\t1922\t['Fernando Pessoa']\tFernando Pessoa\nSur La Pointe Des Pieds\t0\t0.528\t0.343\t0.315\t0.995\t0.385\t0.634\t1922\t['Georgius']\tGeorgius\nNobody Knows You When You're Down and Out\t41\t0.614\t0.0423\t0.0535\t0.996\t0.183\t0.211\t1923\t['Bessie Smith']\tBessie Smith\nWeather Bird\t38\t0.831\t0.262\t0.0942\t0.984\t0.204\t0.901\t1923\t['Louis Armstrong', 'Earl Hines']\tLouis Armstrong\nWeather Bird\t38\t0.831\t0.262\t0.0942\t0.984\t0.204\t0.901\t1923\t['Louis Armstrong', 'Earl Hines']\tEarl Hines\n'Tain't Nobody's Bizness If I Do\t30\t0.537\t0.0443\t0.0343\t0.996\t0.152\t0.137\t1923\t['Bessie Smith']\tBessie Smith\nAin't Misbehavin'\t28\t0.665\t0.254\t0.108\t0.976\t0.644\t0.503\t1923\t['Louis Armstrong']\tLouis Armstrong\nEmpty Bed Blues, Pt. 1\t27\t0.709\t0.062\t0.048\t0.995\t0.12\t0.553\t1923\t['Bessie Smith']\tBessie Smith\nNeed a Little Sugar in My Bowl\t27\t0.693\t0.027\t0.0562\t0.992\t0.134\t0.402\t1923\t['Bessie Smith']\tBessie Smith\nSend Me to the 'Lectric Chair\t26\t0.771\t0.0905\t0.0613\t0.986\t0.152\t0.601\t1923\t['Bessie Smith']\tBessie Smith\nYoung Woman's Blues\t25\t0.525\t0.232\t0.0335\t0.995\t0.461\t0.411\t1923\t['Bessie Smith']\tBessie Smith\nCareless Love\t25\t0.587\t0.175\t0.0384\t0.992\t0.073\t0.483\t1923\t['Bessie Smith']\tBessie Smith\nMe and My Gin\t23\t0.71\t0.0735\t0.0488\t0.99\t0.0941\t0.494\t1923\t['Bessie Smith']\tBessie Smith\nBlue Yodel No. 9\t23\t0.76\t0.251\t0.0602\t0.969\t0.0561\t0.735\t1923\t['Jimmie Rodgers']\tJimmie Rodgers\nSt. Louis Blues\t23\t0.355\t0.114\t0.0588\t0.991\t0.108\t0.258\t1923\t['Bessie Smith', 'Louis Armstrong']\tBessie Smith\nSt. Louis Blues\t23\t0.355\t0.114\t0.0588\t0.991\t0.108\t0.258\t1923\t['Bessie Smith', 'Louis Armstrong']\tLouis Armstrong\nSt. Louis Blues (with Louis Armstrong)\t23\t0.408\t0.145\t0.0501\t0.994\t0.138\t0.294\t1923\t['Bessie Smith', 'Louis Armstrong']\tBessie Smith\nSt. Louis Blues (with Louis Armstrong)\t23\t0.408\t0.145\t0.0501\t0.994\t0.138\t0.294\t1923\t['Bessie Smith', 'Louis Armstrong']\tLouis Armstrong\nBackwater Blues\t22\t0.516\t0.146\t0.0454\t0.993\t0.172\t0.412\t1923\t['Bessie Smith']\tBessie Smith\nBaby Won't You Please Come Home\t22\t0.683\t0.0534\t0.0356\t0.996\t0.141\t0.44\t1923\t['Bessie Smith']\tBessie Smith\nSnake Rag\t20\t0.708\t0.361\t0.0441\t0.994\t0.103\t0.902\t1923\t[\"King Oliver's Creole Jazz Band\"]\t\"King Olivers Creole Jazz Band\"\nWest End Blues\t18\t0.621\t0.274\t0.0514\t0.986\t0.113\t0.523\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nDown Hearted Blues\t17\t0.491\t0.0583\t0.0431\t0.996\t0.137\t0.556\t1923\t['Bessie Smith']\tBessie Smith\nGimme a Pigfoot and a Bottle of Beer\t16\t0.691\t0.198\t0.0784\t0.971\t0.154\t0.558\t1923\t['Bessie Smith']\tBessie Smith\nSobbin' Hearted Blues\t15\t0.415\t0.0795\t0.0908\t0.995\t0.426\t0.443\t1923\t['Bessie Smith', 'Louis Armstrong']\tBessie Smith\nSobbin' Hearted Blues\t15\t0.415\t0.0795\t0.0908\t0.995\t0.426\t0.443\t1923\t['Bessie Smith', 'Louis Armstrong']\tLouis Armstrong\nMuggles\t14\t0.586\t0.113\t0.0607\t0.989\t0.181\t0.484\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nChimes Blues\t14\t0.546\t0.189\t0.0581\t0.996\t0.339\t0.554\t1923\t[\"King Oliver's Creole Jazz Band\"]\t\"King Olivers Creole Jazz Band\"\nLazy River\t14\t0.571\t0.269\t0.067\t0.96\t0.121\t0.49\t1923\t['Louis Armstrong']\tLouis Armstrong\nPickin' On Your Baby\t11\t0.52\t0.153\t0.044\t0.995\t0.353\t0.319\t1923\t[\"Clarence Williams' Blue Five\"]\t\"Clarence Williams Blue Five\"\nWork House Blues\t11\t0.417\t0.0498\t0.0344\t0.996\t0.169\t0.411\t1923\t['Bessie Smith']\tBessie Smith\nEverybody Loves My Baby\t10\t0.514\t0.193\t0.238\t0.996\t0.248\t0.665\t1923\t[\"Clarence Williams' Blue Five\"]\t\"Clarence Williams Blue Five\"\nPreachin' the Blues\t11\t0.703\t0.185\t0.0441\t0.993\t0.22\t0.491\t1923\t['Bessie Smith']\tBessie Smith\nBlack Mountain Blues\t10\t0.641\t0.063\t0.0727\t0.995\t0.153\t0.609\t1923\t['Bessie Smith']\tBessie Smith\nI've Got The World On A String\t11\t0.544\t0.181\t0.0387\t0.985\t0.401\t0.411\t1923\t['Louis Armstrong']\tLouis Armstrong\nYou've Been a Good Old Wagon\t10\t0.602\t0.132\t0.0532\t0.996\t0.164\t0.351\t1923\t['Bessie Smith']\tBessie Smith\nLong Old Road\t11\t0.557\t0.0792\t0.0541\t0.991\t0.186\t0.494\t1923\t['Bessie Smith']\tBessie Smith\nTears\t10\t0.359\t0.357\t0.0511\t0.994\t0.29\t0.753\t1923\t[\"King Oliver's Creole Jazz Band\"]\t\"King Olivers Creole Jazz Band\"\nThere'll Be a Hot Time in the Old Town Tonight\t10\t0.72\t0.214\t0.07\t0.99\t0.148\t0.58\t1923\t['Bessie Smith']\tBessie Smith\nA Monday Date\t8\t0.745\t0.396\t0.481\t0.971\t0.238\t0.751\t1923\t['Louis Armstrong & His Hot Seven']\tLouis Armstrong & His Hot Seven\nI'm A Ding Dong Daddy\t8\t0.759\t0.454\t0.0822\t0.98\t0.18\t0.889\t1923\t['Louis Armstrong & His Sebastian New Cotton Club Orchestra']\tLouis Armstrong & His Sebastian New Cotton Club Orchestra\nChicago Breakdown\t8\t0.604\t0.325\t0.213\t0.985\t0.195\t0.629\t1923\t['Louis Armstrong']\tLouis Armstrong\nBeau Koo Jack\t9\t0.733\t0.418\t0.0765\t0.949\t0.229\t0.961\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nEmpty Bed Blues, Pt. 2\t10\t0.8\t0.0466\t0.0578\t0.994\t0.111\t0.489\t1923\t['Bessie Smith']\tBessie Smith\nStardust\t8\t0.717\t0.209\t0.0622\t0.979\t0.0609\t0.889\t1923\t['Louis Armstrong']\tLouis Armstrong\nTexas Moaner Blues - 78rpm Version\t8\t0.519\t0.272\t0.0627\t0.995\t0.351\t0.469\t1923\t[\"Clarence Williams' Blue Five\"]\t\"Clarence Williams Blue Five\"\nHeebie Jeebies\t8\t0.63\t0.232\t0.0569\t0.995\t0.124\t0.59\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nSong of the Islands\t8\t0.603\t0.13\t0.0426\t0.976\t0.0943\t0.381\t1923\t['Louis Armstrong']\tLouis Armstrong\nHotter Than That\t8\t0.792\t0.321\t0.131\t0.973\t0.129\t0.854\t1923\t['Louis Armstrong & His Hot Seven']\tLouis Armstrong & His Hot Seven\nGut Bucket Blues\t6\t0.602\t0.216\t0.0676\t0.996\t0.0973\t0.716\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nStruttin'With Some Barbecue\t5\t0.726\t0.212\t0.126\t0.963\t0.0798\t0.825\t1923\t['Louis Armstrong']\tLouis Armstrong\nSkid-Dat-De-Dat\t6\t0.658\t0.0841\t0.0496\t0.994\t0.088\t0.504\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nYou Can't Shush Katie\t7\t0.713\t0.231\t0.067\t0.995\t0.436\t0.675\t1923\t[\"Clarence Williams' Blue Five\"]\t\"Clarence Williams Blue Five\"\nThat Rhythm Man\t5\t0.719\t0.388\t0.154\t0.97\t0.132\t0.806\t1923\t['Louis Armstrong']\tLouis Armstrong\nMemories Of You\t5\t0.615\t0.13\t0.0466\t0.992\t0.146\t0.256\t1923\t['Louis Armstrong & His Sebastian New Cotton Club Orchestra']\tLouis Armstrong & His Sebastian New Cotton Club Orchestra\nBlue Again\t5\t0.598\t0.31\t0.0714\t0.978\t0.0766\t0.537\t1923\t['Louis Armstrong']\tLouis Armstrong\n(What Did I Do to Be So) Black and Blue\t5\t0.681\t0.188\t0.0482\t0.988\t0.345\t0.387\t1923\t['Louis Armstrong']\tLouis Armstrong\nWeary Blues\t5\t0.573\t0.246\t0.224\t0.907\t0.0752\t0.965\t1923\t['Louis Armstrong & His Hot Seven']\tLouis Armstrong & His Hot Seven\nOn The Sunny Side Of The Street - Part 1\t5\t0.585\t0.228\t0.0475\t0.989\t0.55\t0.576\t1923\t['Louis Armstrong']\tLouis Armstrong\nAnybody Here Want to Try My Cabbage?\t7\t0.584\t0.201\t0.0575\t0.976\t0.689\t0.58\t1923\t['Maggie Jones']\tMaggie Jones\nKing Of The Zulas\t5\t0.536\t0.168\t0.114\t0.994\t0.29\t0.554\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nBetween The Devil And The Deep Blue Sea\t5\t0.625\t0.203\t0.077\t0.937\t0.0868\t0.741\t1923\t['Louis Armstrong']\tLouis Armstrong\nStomp Off, Let's Go\t6\t0.692\t0.477\t0.363\t0.994\t0.369\t0.96\t1923\t[\"Erskine Tate's Vendome Orchestra\"]\t\"Erskine Tates Vendome Orchestra\"\nSkip The Gutter\t5\t0.653\t0.131\t0.0628\t0.977\t0.6\t0.593\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nNo One Else But You\t6\t0.496\t0.311\t0.124\t0.923\t0.252\t0.718\t1923\t['Louis Armstrong & His Savoy Ballroom Five']\tLouis Armstrong & His Savoy Ballroom Five\nChangeable Daddy Of Mine\t6\t0.583\t0.214\t0.0423\t0.994\t0.446\t0.647\t1923\t['Margaret Johnson']\tMargaret Johnson\nChinatown, My Chinatown\t5\t0.562\t0.525\t0.142\t0.945\t0.129\t0.794\t1923\t['Louis Armstrong']\tLouis Armstrong\nSymphonic Raps\t5\t0.78\t0.368\t0.0958\t0.98\t0.0798\t0.957\t1923\t[\"Carroll Dickerson's Savoyagers\"]\t\"Carroll Dickersons Savoyagers\"\nSweethearts On Parade\t6\t0.606\t0.261\t0.0679\t0.968\t0.12\t0.657\t1923\t['Louis Armstrong & His Sebastian New Cotton Club Orchestra']\tLouis Armstrong & His Sebastian New Cotton Club Orchestra\nAlone At Last\t5\t0.66\t0.184\t0.0322\t0.996\t0.305\t0.43\t1923\t['The Southern Serenaders']\tThe Southern Serenaders\nSt. Louis Blues - Alternate Take B\t5\t0.68\t0.47\t0.11\t0.912\t0.0819\t0.946\t1923\t['Louis Armstrong']\tLouis Armstrong\nPapa De Da Da\t7\t0.673\t0.132\t0.0771\t0.995\t0.26\t0.587\t1923\t[\"Clarence Williams' Blue Five\"]\t\"Clarence Williams Blue Five\"\nI Must Have That Man\t5\t0.851\t0.221\t0.0932\t0.953\t0.0692\t0.651\t1923\t['Lillie Delk Christian']\tLillie Delk Christian\nWhen You're Smiling - Non Vocal Take\t6\t0.5\t0.193\t0.0347\t0.984\t0.227\t0.624\t1923\t['Louis Armstrong']\tLouis Armstrong\nI Can't Give You Anything But Love\t5\t0.66\t0.118\t0.0648\t0.951\t0.0841\t0.577\t1923\t['Louis Armstrong & His Savoy Ballroom Five']\tLouis Armstrong & His Savoy Ballroom Five\nGully Low Blues\t6\t0.679\t0.144\t0.0975\t0.933\t0.0915\t0.82\t1923\t['Louis Armstrong & His Hot Seven']\tLouis Armstrong & His Hot Seven\nBasin Street Blues - rec. 1928\t6\t0.561\t0.353\t0.0538\t0.971\t0.922\t0.514\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nWhen Your Lover Has Gone\t5\t0.454\t0.233\t0.0433\t0.968\t0.218\t0.496\t1923\t['Louis Armstrong']\tLouis Armstrong\nNaughty Man\t7\t0.59\t0.268\t0.0725\t0.995\t0.646\t0.848\t1923\t['Fletcher Henderson & His Orchestra']\tFletcher Henderson & His Orchestra\nSugar Foot Stomp\t7\t0.78\t0.207\t0.0771\t0.983\t0.101\t0.879\t1923\t['Fletcher Henderson & His Orchestra']\tFletcher Henderson & His Orchestra\nMahogany Hall Stomp\t7\t0.642\t0.274\t0.101\t0.83\t0.0398\t0.767\t1923\t['Louis Armstrong']\tLouis Armstrong\nI'm Confessin' (That I Love You)\t7\t0.479\t0.14\t0.0725\t0.988\t0.153\t0.415\t1923\t['Louis Armstrong & His Sebastian New Cotton Club Orchestra']\tLouis Armstrong & His Sebastian New Cotton Club Orchestra\nI Can't Believe That You're In Love With Me\t6\t0.579\t0.204\t0.0804\t0.928\t0.0901\t0.75\t1923\t['Louis Armstrong']\tLouis Armstrong\nSong Of The Vipers\t5\t0.553\t0.255\t0.0874\t0.975\t0.531\t0.638\t1923\t['Louis Armstrong']\tLouis Armstrong\nGood Time Flat Blues\t6\t0.551\t0.196\t0.0594\t0.995\t0.384\t0.534\t1923\t['Maggie Jones']\tMaggie Jones\nCake Walking Babies (From Home)\t6\t0.634\t0.435\t0.0474\t0.995\t0.204\t0.84\t1923\t[\"Clarence Williams' Blue Five\"]\t\"Clarence Williams Blue Five\"\nPotato Head Blues\t7\t0.587\t0.29\t0.177\t0.936\t0.115\t0.929\t1923\t['Louis Armstrong & His Hot Seven']\tLouis Armstrong & His Hot Seven\nStardust\t5\t0.614\t0.298\t0.0541\t0.97\t0.0514\t0.772\t1923\t['Louis Armstrong']\tLouis Armstrong\nT.N.T.\t7\t0.809\t0.408\t0.0846\t0.942\t0.307\t0.89\t1923\t['Fletcher Henderson & His Orchestra']\tFletcher Henderson & His Orchestra\nLow Land Blues\t5\t0.492\t0.115\t0.0898\t0.98\t0.037\t0.465\t1923\t['Bertha \"Chippie\" Hill']\tBertha \"Chippie\" Hill\nCornet Chop Suey\t5\t0.558\t0.19\t0.0869\t0.995\t0.113\t0.692\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nToo Busy\t5\t0.603\t0.286\t0.0806\t0.99\t0.0682\t0.882\t1923\t['Lillie Delk Christian']\tLillie Delk Christian\nKnockin' A Jug - 78 rpm Version\t6\t0.788\t0.395\t0.301\t0.882\t0.124\t0.676\t1923\t['Louis Armstrong']\tLouis Armstrong\nListen To Ma\t5\t0.536\t0.128\t0.0435\t0.988\t0.314\t0.564\t1923\t['Hociel Thomas', 'Louis Armstrong']\tHociel Thomas\nListen To Ma\t5\t0.536\t0.128\t0.0435\t0.988\t0.314\t0.564\t1923\t['Hociel Thomas', 'Louis Armstrong']\tLouis Armstrong\nChapter 1.10 - Król Maciuś Pierwszy\t0\t0.698\t0.29\t0.954\t0.819\t0.326\t0.801\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.4 - Król Maciuś Pierwszy\t0\t0.61\t0.214\t0.958\t0.767\t0.16\t0.771\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.15 - Król Maciuś na wyspie bezludnej\t0\t0.662\t0.161\t0.944\t0.66\t0.118\t0.655\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.21 & Chapter 6.1 - Król Maciuś na wyspie bezludnej\t0\t0.719\t0.238\t0.929\t0.668\t0.135\t0.621\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.20 & Chapter 8.1 - Król Maciuś Pierwszy\t0\t0.613\t0.238\t0.956\t0.835\t0.362\t0.785\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.11 - Król Maciuś Pierwszy\t0\t0.715\t0.229\t0.937\t0.724\t0.15\t0.683\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.13 - Król Maciuś na wyspie bezludnej\t0\t0.675\t0.293\t0.948\t0.9\t0.262\t0.742\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.6 - Król Maciuś na wyspie bezludnej\t0\t0.699\t0.245\t0.946\t0.702\t0.152\t0.723\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.21 & Chapter 3.1 - Król Maciuś Pierwszy\t0\t0.691\t0.18\t0.95\t0.649\t0.168\t0.67\t1923\t['Janusz Korczak']\tJanusz Korczak\nSol Mio - Remasterizado\t0\t0.501\t0.39\t0.05\t0.995\t0.173\t0.807\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 1.13 - Król Maciuś Pierwszy\t0\t0.751\t0.257\t0.931\t0.742\t0.375\t0.803\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.4 - Król Maciuś Pierwszy\t0\t0.641\t0.236\t0.957\t0.828\t0.409\t0.637\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.12 - Król Maciuś Pierwszy\t0\t0.718\t0.209\t0.919\t0.691\t0.238\t0.677\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.6 - Król Maciuś na wyspie bezludnej\t0\t0.73\t0.277\t0.954\t0.735\t0.204\t0.626\t1923\t['Janusz Korczak']\tJanusz Korczak\nLe Moment De M'en Aller\t0\t0.653\t0.319\t0.0519\t0.988\t0.266\t0.686\t1923\t['Dranem']\tDranem\nLa Payasa - Remasterizado\t0\t0.47\t0.28\t0.129\t0.992\t0.107\t0.597\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 5.19 - Król Maciuś Pierwszy\t0\t0.72\t0.261\t0.947\t0.794\t0.133\t0.767\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.19 - Król Maciuś na wyspie bezludnej\t0\t0.667\t0.244\t0.954\t0.451\t0.135\t0.527\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.15 - Król Maciuś Pierwszy\t0\t0.705\t0.268\t0.945\t0.729\t0.139\t0.826\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.9 - Król Maciuś Pierwszy\t0\t0.687\t0.167\t0.944\t0.812\t0.211\t0.665\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.2 - Król Maciuś Pierwszy\t0\t0.715\t0.186\t0.927\t0.74\t0.207\t0.73\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.13 - Król Maciuś na wyspie bezludnej\t0\t0.636\t0.215\t0.946\t0.733\t0.213\t0.542\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.14 - Król Maciuś Pierwszy\t0\t0.71\t0.278\t0.945\t0.831\t0.155\t0.68\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.17 - Król Maciuś Pierwszy\t0\t0.706\t0.211\t0.943\t0.848\t0.148\t0.722\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.16 - Król Maciuś Pierwszy\t0\t0.737\t0.253\t0.938\t0.827\t0.162\t0.828\t1923\t['Janusz Korczak']\tJanusz Korczak\nWhen It's Sleepy Time Down South\t4\t0.527\t0.178\t0.0793\t0.989\t0.104\t0.37\t1923\t['Louis Armstrong']\tLouis Armstrong\nChapter 6.18 - Król Maciuś Pierwszy\t0\t0.629\t0.246\t0.957\t0.791\t0.217\t0.675\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.20 & Chapter 5.1 - Król Maciuś na wyspie bezludnej\t0\t0.708\t0.179\t0.941\t0.735\t0.214\t0.681\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.11 - Król Maciuś Pierwszy\t0\t0.675\t0.262\t0.951\t0.779\t0.208\t0.816\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.13 - Król Maciuś Pierwszy\t0\t0.712\t0.27\t0.942\t0.822\t0.192\t0.762\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.20 & Chapter 4.1 - Król Maciuś Pierwszy\t0\t0.691\t0.243\t0.95\t0.733\t0.27\t0.64\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.18 - Król Maciuś Pierwszy\t0\t0.757\t0.27\t0.939\t0.795\t0.132\t0.819\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.20 & Chapter 7.1 - Król Maciuś Pierwszy\t0\t0.624\t0.25\t0.952\t0.767\t0.361\t0.602\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.12 - Król Maciuś Pierwszy\t0\t0.734\t0.273\t0.955\t0.766\t0.126\t0.791\t1923\t['Janusz Korczak']\tJanusz Korczak\nPleadin' for the Blues\t4\t0.661\t0.134\t0.0763\t0.996\t0.119\t0.575\t1923\t['Bertha \"Chippie\" Hill', 'Louis Armstrong']\tBertha \"Chippie\" Hill\nPleadin' for the Blues\t4\t0.661\t0.134\t0.0763\t0.996\t0.119\t0.575\t1923\t['Bertha \"Chippie\" Hill', 'Louis Armstrong']\tLouis Armstrong\nChapter 2.19 - Król Maciuś na wyspie bezludnej\t0\t0.699\t0.261\t0.956\t0.919\t0.152\t0.689\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.13 - Król Maciuś Pierwszy\t0\t0.63\t0.262\t0.959\t0.788\t0.236\t0.787\t1923\t['Janusz Korczak']\tJanusz Korczak\nDemasiado tarde - en vivo\t0\t0.583\t0.715\t0.0287\t0.839\t0.363\t0.772\t1923\t['Yiyo y Los Chicos 10']\tYiyo y Los Chicos 10\nChapter 7.17 - Król Maciuś Pierwszy\t0\t0.713\t0.205\t0.937\t0.747\t0.387\t0.697\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.12 - Król Maciuś Pierwszy\t0\t0.703\t0.168\t0.958\t0.718\t0.319\t0.699\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.3 - Król Maciuś na wyspie bezludnej\t0\t0.637\t0.275\t0.962\t0.735\t0.158\t0.603\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.12 - Król Maciuś na wyspie bezludnej\t0\t0.696\t0.283\t0.951\t0.862\t0.181\t0.695\t1923\t['Janusz Korczak']\tJanusz Korczak\nEntre Criollos - Remasterizado\t0\t0.414\t0.248\t0.0905\t0.992\t0.172\t0.532\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nTight Like This\t4\t0.726\t0.254\t0.124\t0.982\t0.0398\t0.456\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nChapter 3.6 - Król Maciuś Pierwszy\t0\t0.619\t0.239\t0.956\t0.724\t0.285\t0.667\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.19 - Król Maciuś Pierwszy\t0\t0.72\t0.195\t0.914\t0.768\t0.154\t0.804\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.9 - Król Maciuś na wyspie bezludnej\t0\t0.717\t0.236\t0.959\t0.737\t0.297\t0.68\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.7 - Król Maciuś Pierwszy\t0\t0.701\t0.277\t0.956\t0.771\t0.142\t0.52\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.2 - Król Maciuś Pierwszy\t0\t0.688\t0.234\t0.961\t0.78\t0.21\t0.7\t1923\t['Janusz Korczak']\tJanusz Korczak\nTo Be In Love\t4\t0.564\t0.203\t0.0743\t0.992\t0.457\t0.814\t1923\t['Seger Ellis']\tSeger Ellis\nVencida - Remasterizado\t0\t0.572\t0.0909\t0.139\t0.996\t0.246\t0.57\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 9.14 - Król Maciuś Pierwszy\t0\t0.716\t0.249\t0.936\t0.882\t0.204\t0.75\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.5 - Król Maciuś Pierwszy\t0\t0.651\t0.242\t0.954\t0.798\t0.226\t0.804\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.6 - Król Maciuś Pierwszy\t0\t0.633\t0.243\t0.958\t0.894\t0.185\t0.71\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.20 - Król Maciuś Pierwszy\t0\t0.645\t0.225\t0.949\t0.813\t0.152\t0.807\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.4 - Król Maciuś Pierwszy\t0\t0.709\t0.252\t0.939\t0.708\t0.222\t0.661\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.5 - Król Maciuś na wyspie bezludnej\t0\t0.677\t0.251\t0.96\t0.707\t0.18\t0.633\t1923\t['Janusz Korczak']\tJanusz Korczak\nWhat'll I Do\t0\t0.269\t0.249\t0.0735\t0.968\t0.269\t0.143\t1923\t['Marie Earth Heart']\tMarie Earth Heart\nChapter 1.10 - Król Maciuś na wyspie bezludnej\t0\t0.7\t0.293\t0.928\t0.843\t0.18\t0.799\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.6 - Król Maciuś na wyspie bezludnej\t0\t0.718\t0.231\t0.961\t0.894\t0.138\t0.592\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.9 - Król Maciuś na wyspie bezludnej\t0\t0.706\t0.206\t0.939\t0.633\t0.243\t0.563\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.9 - Król Maciuś Pierwszy\t0\t0.719\t0.243\t0.936\t0.889\t0.174\t0.826\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.6 - Król Maciuś na wyspie bezludnej\t0\t0.686\t0.232\t0.949\t0.781\t0.159\t0.643\t1923\t['Janusz Korczak']\tJanusz Korczak\nQuiereme,Que ganas me dieron - en vivo\t2\t0.576\t0.672\t0.0498\t0.485\t0.45\t0.824\t1923\t['Yiyo y Los Chicos 10']\tYiyo y Los Chicos 10\nChapter 7.17 & Chapter 8.1 - Król Maciuś na wyspie bezludnej\t0\t0.704\t0.16\t0.937\t0.763\t0.37\t0.663\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.10 - Król Maciuś na wyspie bezludnej\t0\t0.698\t0.21\t0.951\t0.771\t0.158\t0.653\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.12 - Król Maciuś Pierwszy\t0\t0.715\t0.264\t0.94\t0.742\t0.224\t0.767\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.18 - Król Maciuś Pierwszy\t0\t0.64\t0.224\t0.943\t0.855\t0.206\t0.717\t1923\t['Janusz Korczak']\tJanusz Korczak\nC'est Au Bal Musette\t0\t0.435\t0.353\t0.0992\t0.992\t0.303\t0.767\t1923\t['Gaby Montbreuse']\tGaby Montbreuse\nChapter 9.13 - Król Maciuś Pierwszy\t0\t0.778\t0.266\t0.95\t0.776\t0.34\t0.779\t1923\t['Janusz Korczak']\tJanusz Korczak\nChanson De Route De Ciboulette\t0\t0.783\t0.341\t0.873\t0.991\t0.589\t0.803\t1923\t['Edmée Favart']\tEdmée Favart\nChapter 2.17 - Król Maciuś Pierwszy\t0\t0.62\t0.291\t0.955\t0.749\t0.251\t0.75\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.7 - Król Maciuś na wyspie bezludnej\t0\t0.666\t0.294\t0.96\t0.735\t0.177\t0.628\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.11 - Król Maciuś na wyspie bezludnej\t0\t0.762\t0.19\t0.938\t0.651\t0.114\t0.762\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.11 - Król Maciuś Pierwszy\t0\t0.701\t0.25\t0.953\t0.778\t0.19\t0.742\t1923\t['Janusz Korczak']\tJanusz Korczak\nMa Gosse\t0\t0.635\t0.285\t0.217\t0.98\t0.446\t0.759\t1923\t['Georgius']\tGeorgius\nPala Oyunu\t0\t0.234\t0.401\t0.04\t0.989\t0.393\t0.823\t1923\t['Hafız Ahmet Celâl Tokses']\tHafız Ahmet Celâl Tokses\nChapter 8.4 - Król Maciuś na wyspie bezludnej\t0\t0.646\t0.272\t0.953\t0.558\t0.118\t0.593\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.8 - Król Maciuś Pierwszy\t0\t0.679\t0.223\t0.956\t0.902\t0.157\t0.781\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.15 - Król Maciuś na wyspie bezludnej\t0\t0.698\t0.226\t0.94\t0.762\t0.133\t0.707\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.17 - Król Maciuś na wyspie bezludnej\t0\t0.703\t0.262\t0.942\t0.571\t0.285\t0.604\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.11 - Król Maciuś na wyspie bezludnej\t0\t0.715\t0.251\t0.952\t0.756\t0.204\t0.684\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.8 - Król Maciuś na wyspie bezludnej\t0\t0.676\t0.244\t0.953\t0.642\t0.218\t0.669\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.16 - Król Maciuś Pierwszy\t0\t0.624\t0.222\t0.965\t0.622\t0.208\t0.656\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.3 - Król Maciuś na wyspie bezludnej\t0\t0.711\t0.316\t0.958\t0.7\t0.119\t0.669\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.7 - Król Maciuś Pierwszy\t0\t0.713\t0.281\t0.935\t0.82\t0.166\t0.901\t1923\t['Janusz Korczak']\tJanusz Korczak\nFakir - Remasterizado\t0\t0.424\t0.283\t0.0509\t0.989\t0.289\t0.444\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 4.14 - Król Maciuś na wyspie bezludnej\t0\t0.658\t0.179\t0.959\t0.839\t0.228\t0.586\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.12 - Król Maciuś na wyspie bezludnej\t0\t0.729\t0.156\t0.94\t0.709\t0.236\t0.57\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.7 - Król Maciuś Pierwszy\t0\t0.798\t0.229\t0.945\t0.727\t0.131\t0.74\t1923\t['Janusz Korczak']\tJanusz Korczak\nTu Voudrais Me Voir Pleurer\t0\t0.496\t0.32\t0.0847\t0.995\t0.272\t0.621\t1923\t['Robert Jysor']\tRobert Jysor\nChapter 8.16 - Król Maciuś Pierwszy\t0\t0.663\t0.239\t0.955\t0.886\t0.177\t0.756\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.18 - Król Maciuś Pierwszy\t0\t0.693\t0.258\t0.957\t0.902\t0.289\t0.774\t1923\t['Janusz Korczak']\tJanusz Korczak\nHicran\t1\t0.227\t0.423\t0.095\t0.994\t0.439\t0.182\t1923\t['Safiye Ayla']\tSafiye Ayla\nEn la Cruz\t0\t0.573\t0.31\t0.0258\t0.872\t0.101\t0.483\t1923\t['Pablo Pastor']\tPablo Pastor\nChapter 6.8 - Król Maciuś na wyspie bezludnej\t0\t0.713\t0.239\t0.94\t0.807\t0.258\t0.578\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.16 - Król Maciuś Pierwszy\t0\t0.698\t0.256\t0.953\t0.774\t0.167\t0.769\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.12 - Król Maciuś Pierwszy\t0\t0.68\t0.202\t0.946\t0.868\t0.216\t0.596\t1923\t['Janusz Korczak']\tJanusz Korczak\nLe Tapis Vert\t0\t0.38\t0.235\t0.053\t0.99\t0.457\t0.556\t1923\t['Adolphe Bérard']\tAdolphe Bérard\nChapter 4.21 & Chapter 5.1 - Król Maciuś Pierwszy\t0\t0.707\t0.182\t0.959\t0.748\t0.191\t0.613\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.17 - Król Maciuś Pierwszy\t0\t0.611\t0.207\t0.955\t0.658\t0.152\t0.803\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.19 - Król Maciuś na wyspie bezludnej\t0\t0.646\t0.193\t0.957\t0.729\t0.117\t0.614\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.8 - Król Maciuś Pierwszy\t0\t0.693\t0.245\t0.945\t0.888\t0.254\t0.645\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.5 - Król Maciuś Pierwszy\t0\t0.714\t0.227\t0.955\t0.782\t0.149\t0.813\t1923\t['Janusz Korczak']\tJanusz Korczak\nPek Muztaribim\t0\t0.26\t0.333\t0.0896\t0.995\t0.51\t0.19\t1923\t['Hafız Ahmet Celâl Tokses']\tHafız Ahmet Celâl Tokses\nChapter 6.11 - Król Maciuś na wyspie bezludnej\t0\t0.669\t0.219\t0.955\t0.795\t0.355\t0.667\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.9 - Król Maciuś Pierwszy\t0\t0.706\t0.22\t0.943\t0.808\t0.301\t0.65\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.15 - Król Maciuś na wyspie bezludnej\t0\t0.609\t0.265\t0.955\t0.835\t0.238\t0.746\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.3 - Król Maciuś na wyspie bezludnej\t0\t0.729\t0.293\t0.952\t0.826\t0.162\t0.565\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.3 - Król Maciuś na wyspie bezludnej\t0\t0.675\t0.267\t0.953\t0.693\t0.233\t0.715\t1923\t['Janusz Korczak']\tJanusz Korczak\nCuando Buda Sonríe - Remasterizado\t0\t0.377\t0.335\t0.0426\t0.992\t0.173\t0.618\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 5.12 - Król Maciuś Pierwszy\t0\t0.711\t0.181\t0.944\t0.743\t0.4\t0.712\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.14 - Król Maciuś Pierwszy\t0\t0.652\t0.235\t0.955\t0.797\t0.115\t0.568\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.10 - Król Maciuś na wyspie bezludnej\t0\t0.742\t0.204\t0.951\t0.844\t0.131\t0.733\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.16 - Król Maciuś na wyspie bezludnej\t0\t0.721\t0.257\t0.941\t0.899\t0.354\t0.761\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.17 - Król Maciuś na wyspie bezludnej\t0\t0.777\t0.179\t0.952\t0.762\t0.227\t0.618\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.18 - Król Maciuś na wyspie bezludnej\t0\t0.785\t0.265\t0.935\t0.73\t0.263\t0.737\t1923\t['Janusz Korczak']\tJanusz Korczak\nElectric Girl - Remasterizado\t0\t0.563\t0.426\t0.148\t0.994\t0.209\t0.733\t1923\t['Francisco Canaro']\tFrancisco Canaro\nSacate la Caretita - Remasterizado\t0\t0.574\t0.0119\t0.102\t0.996\t0.099\t0.66\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 3.4 - Król Maciuś na wyspie bezludnej\t0\t0.696\t0.296\t0.957\t0.648\t0.431\t0.603\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.14 - Król Maciuś Pierwszy\t0\t0.707\t0.197\t0.953\t0.87\t0.164\t0.737\t1923\t['Janusz Korczak']\tJanusz Korczak\nVeranito de San Juan - Remasterizado\t0\t0.515\t0.272\t0.108\t0.994\t0.15\t0.89\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 6.15 - Król Maciuś na wyspie bezludnej\t0\t0.715\t0.173\t0.95\t0.903\t0.187\t0.787\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.15 - Król Maciuś Pierwszy\t0\t0.718\t0.164\t0.933\t0.873\t0.17\t0.694\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.5 - Król Maciuś Pierwszy\t0\t0.676\t0.264\t0.946\t0.815\t0.189\t0.763\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.8 - Król Maciuś Pierwszy\t0\t0.649\t0.242\t0.955\t0.729\t0.149\t0.716\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.3 - Król Maciuś Pierwszy\t0\t0.629\t0.239\t0.957\t0.763\t0.221\t0.67\t1923\t['Janusz Korczak']\tJanusz Korczak\nThe Loveliest Night of the Year\t0\t0.433\t0.422\t0.0418\t0.815\t0.114\t0.453\t1923\t['Harry Curtis']\tHarry Curtis\nLa Danza de las Libélulas - Remasterizado\t0\t0.397\t0.229\t0.0365\t0.996\t0.379\t0.424\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 7.14 - Król Maciuś Pierwszy\t0\t0.63\t0.257\t0.962\t0.818\t0.321\t0.783\t1923\t['Janusz Korczak']\tJanusz Korczak\nLa Garconniere - Remasterizado\t0\t0.493\t0.109\t0.423\t0.996\t0.4\t0.599\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 8.17 - Król Maciuś Pierwszy\t0\t0.621\t0.15\t0.945\t0.883\t0.202\t0.682\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.20 - Król Maciuś na wyspie bezludnej\t0\t0.708\t0.25\t0.941\t0.662\t0.123\t0.68\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.4 - Król Maciuś Pierwszy\t0\t0.614\t0.266\t0.96\t0.816\t0.222\t0.68\t1923\t['Janusz Korczak']\tJanusz Korczak\nD'la Vraie Amour\t0\t0.641\t0.283\t0.316\t0.993\t0.15\t0.843\t1923\t['Gaby Montbreuse']\tGaby Montbreuse\nChapter 6.5 - Król Maciuś na wyspie bezludnej\t0\t0.739\t0.227\t0.953\t0.793\t0.189\t0.602\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.19 - Król Maciuś Pierwszy\t0\t0.72\t0.202\t0.933\t0.784\t0.169\t0.714\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.18 - Król Maciuś Pierwszy\t0\t0.661\t0.196\t0.939\t0.76\t0.189\t0.843\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.2 - Król Maciuś na wyspie bezludnej\t0\t0.62\t0.244\t0.964\t0.693\t0.234\t0.513\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.7 - Król Maciuś na wyspie bezludnej\t0\t0.713\t0.216\t0.948\t0.645\t0.284\t0.551\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.7 - Król Maciuś Pierwszy\t0\t0.7\t0.222\t0.952\t0.907\t0.152\t0.672\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.7 - Król Maciuś na wyspie bezludnej\t0\t0.619\t0.236\t0.961\t0.706\t0.188\t0.588\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.10 - Król Maciuś na wyspie bezludnej\t0\t0.679\t0.221\t0.96\t0.877\t0.365\t0.712\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.16 - Król Maciuś na wyspie bezludnej\t0\t0.656\t0.195\t0.959\t0.874\t0.116\t0.729\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.10 - Król Maciuś na wyspie bezludnej\t0\t0.697\t0.248\t0.95\t0.57\t0.658\t0.669\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.13 - Król Maciuś Pierwszy\t0\t0.627\t0.243\t0.96\t0.74\t0.319\t0.737\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.13 - Król Maciuś na wyspie bezludnej\t0\t0.682\t0.14\t0.921\t0.683\t0.166\t0.591\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.2 - Król Maciuś Pierwszy\t0\t0.684\t0.176\t0.945\t0.723\t0.228\t0.722\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.21 & Chapter 9.1 - Król Maciuś Pierwszy\t0\t0.639\t0.263\t0.96\t0.875\t0.206\t0.621\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.5 - Król Maciuś Pierwszy\t0\t0.715\t0.158\t0.933\t0.722\t0.181\t0.556\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.12 - Król Maciuś Pierwszy\t0\t0.719\t0.175\t0.93\t0.807\t0.172\t0.687\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.15 - Król Maciuś Pierwszy\t0\t0.725\t0.242\t0.944\t0.774\t0.316\t0.649\t1923\t['Janusz Korczak']\tJanusz Korczak\nPadre Nuestro - Remasterizado\t0\t0.6\t0.243\t0.055\t0.994\t0.15\t0.614\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 2.8 - Król Maciuś Pierwszy\t0\t0.712\t0.22\t0.937\t0.704\t0.3\t0.695\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.20 & Chapter 10.1 - Król Maciuś Pierwszy\t0\t0.642\t0.215\t0.941\t0.787\t0.126\t0.788\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.5 - Król Maciuś na wyspie bezludnej\t0\t0.637\t0.256\t0.95\t0.725\t0.188\t0.637\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.4 - Król Maciuś na wyspie bezludnej\t0\t0.628\t0.21\t0.95\t0.778\t0.298\t0.774\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.18 - Król Maciuś Pierwszy\t0\t0.719\t0.262\t0.928\t0.884\t0.195\t0.842\t1923\t['Janusz Korczak']\tJanusz Korczak\nLa Valse Du Faubourg\t0\t0.623\t0.292\t0.0558\t0.978\t0.341\t0.934\t1923\t['Félix Mayol']\tFélix Mayol\nJuventud - Remasterizado\t0\t0.415\t0.0359\t0.0562\t0.996\t0.105\t0.253\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 1.4 - Król Maciuś na wyspie bezludnej\t0\t0.731\t0.297\t0.94\t0.862\t0.19\t0.786\t1923\t['Janusz Korczak']\tJanusz Korczak\nPobre Cotorro - Remasterizado\t0\t0.502\t0.298\t0.0805\t0.995\t0.285\t0.51\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nTwo Deuces\t4\t0.713\t0.294\t0.073\t0.963\t0.387\t0.558\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nChapter 3.19 - Król Maciuś na wyspie bezludnej\t0\t0.71\t0.228\t0.952\t0.884\t0.164\t0.697\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.16 - Król Maciuś Pierwszy\t0\t0.726\t0.192\t0.954\t0.666\t0.152\t0.649\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.14 - Król Maciuś na wyspie bezludnej\t0\t0.701\t0.21\t0.945\t0.69\t0.169\t0.791\t1923\t['Janusz Korczak']\tJanusz Korczak\nThe C00L Song\t0\t0.503\t0.823\t0.064\t2.43E-4\t0.473\t0.401\t1923\t['Dampfwalzi']\tDampfwalzi\nChapter 2.18 - Król Maciuś na wyspie bezludnej\t0\t0.712\t0.191\t0.944\t0.849\t0.241\t0.591\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.2 - Król Maciuś Pierwszy\t0\t0.746\t0.214\t0.952\t0.817\t0.189\t0.776\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.2 - Król Maciuś na wyspie bezludnej\t0\t0.708\t0.267\t0.95\t0.944\t0.252\t0.611\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.3 - Król Maciuś Pierwszy\t0\t0.666\t0.248\t0.959\t0.79\t0.129\t0.767\t1923\t['Janusz Korczak']\tJanusz Korczak\nOn The Sunny Side Of The Street - Part 2\t4\t0.559\t0.266\t0.0512\t0.989\t0.448\t0.576\t1923\t['Louis Armstrong']\tLouis Armstrong\nChapter 9.5 - Król Maciuś Pierwszy\t0\t0.621\t0.217\t0.962\t0.787\t0.183\t0.716\t1923\t['Janusz Korczak']\tJanusz Korczak\nBeso de Sol - Remasterizado\t0\t0.391\t0.143\t0.0425\t0.994\t0.147\t0.549\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 3.5 - Król Maciuś Pierwszy\t0\t0.707\t0.203\t0.929\t0.694\t0.132\t0.697\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.4 - Król Maciuś Pierwszy\t0\t0.704\t0.229\t0.954\t0.82\t0.162\t0.655\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.9 - Król Maciuś Pierwszy\t0\t0.705\t0.242\t0.943\t0.747\t0.162\t0.778\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.6 - Król Maciuś Pierwszy\t0\t0.703\t0.202\t0.953\t0.678\t0.127\t0.781\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.16 - Król Maciuś na wyspie bezludnej\t0\t0.715\t0.285\t0.926\t0.754\t0.157\t0.554\t1923\t['Janusz Korczak']\tJanusz Korczak\nMi Alazan Tostado - Remasterizado\t0\t0.335\t0.305\t0.0427\t0.994\t0.407\t0.56\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nElle N'est Pas Si Mal Que Ca\t0\t0.519\t0.292\t0.0852\t0.995\t0.474\t0.536\t1923\t['Mlle Davia']\tMlle Davia\nChapter 3.9 - Król Maciuś na wyspie bezludnej\t0\t0.714\t0.232\t0.933\t0.868\t0.141\t0.689\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.3 - Król Maciuś na wyspie bezludnej\t0\t0.66\t0.279\t0.946\t0.816\t0.154\t0.713\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.18 - Król Maciuś Pierwszy\t0\t0.74\t0.302\t0.939\t0.851\t0.136\t0.808\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.4 - Król Maciuś Pierwszy\t0\t0.719\t0.242\t0.938\t0.857\t0.129\t0.785\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.3 - Król Maciuś Pierwszy\t0\t0.665\t0.224\t0.941\t0.855\t0.125\t0.827\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.11 - Król Maciuś Pierwszy\t0\t0.701\t0.22\t0.943\t0.821\t0.242\t0.719\t1923\t['Janusz Korczak']\tJanusz Korczak\nNous Avons Fait Un Beau Voyage\t0\t0.607\t0.279\t0.174\t0.975\t0.219\t0.849\t1923\t['André Baugé']\tAndré Baugé\nI Ain't No Body's Darling - Remasterizado\t0\t0.47\t0.43\t0.0516\t0.995\t0.177\t0.942\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 6.2 - Król Maciuś na wyspie bezludnej\t0\t0.724\t0.271\t0.95\t0.639\t0.169\t0.645\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.5 - Król Maciuś Pierwszy\t0\t0.713\t0.185\t0.924\t0.735\t0.18\t0.709\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.11 - Król Maciuś Pierwszy\t0\t0.632\t0.191\t0.955\t0.735\t0.094\t0.758\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.5 - Król Maciuś na wyspie bezludnej\t0\t0.616\t0.226\t0.96\t0.739\t0.197\t0.683\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.15 - Król Maciuś Pierwszy\t0\t0.64\t0.26\t0.953\t0.876\t0.124\t0.826\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.3 - Król Maciuś na wyspie bezludnej\t0\t0.713\t0.222\t0.936\t0.796\t0.274\t0.734\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.16 - Król Maciuś Pierwszy\t0\t0.707\t0.268\t0.946\t0.742\t0.171\t0.771\t1923\t['Janusz Korczak']\tJanusz Korczak\nThere's No Tomorrow\t0\t0.725\t0.377\t0.0324\t0.758\t0.118\t0.806\t1923\t['Harry Curtis']\tHarry Curtis\nChapter 2.4 - Król Maciuś na wyspie bezludnej\t0\t0.713\t0.204\t0.936\t0.557\t0.15\t0.572\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.17 - Król Maciuś na wyspie bezludnej\t0\t0.658\t0.178\t0.953\t0.811\t0.166\t0.614\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.11 - Król Maciuś Pierwszy\t0\t0.691\t0.208\t0.95\t0.896\t0.174\t0.739\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.18 - Król Maciuś na wyspie bezludnej\t0\t0.628\t0.184\t0.955\t0.383\t0.0658\t0.519\t1923\t['Janusz Korczak']\tJanusz Korczak\nMuchachita Loca - Remasterizado\t0\t0.435\t0.212\t0.0479\t0.995\t0.252\t0.698\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 4.16 - Król Maciuś na wyspie bezludnej\t0\t0.652\t0.159\t0.954\t0.744\t0.144\t0.689\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.7 - Król Maciuś Pierwszy\t0\t0.698\t0.226\t0.956\t0.757\t0.268\t0.802\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.14 - Król Maciuś na wyspie bezludnej\t0\t0.645\t0.172\t0.951\t0.774\t0.13\t0.702\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.11 - Król Maciuś na wyspie bezludnej\t0\t0.739\t0.229\t0.94\t0.811\t0.166\t0.581\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.18 - Król Maciuś Pierwszy\t0\t0.721\t0.203\t0.944\t0.788\t0.167\t0.72\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.2 - Król Maciuś na wyspie bezludnej\t0\t0.703\t0.177\t0.945\t0.683\t0.164\t0.687\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.7 - Król Maciuś na wyspie bezludnej\t0\t0.735\t0.286\t0.929\t0.755\t0.143\t0.712\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.11 - Król Maciuś Pierwszy\t0\t0.71\t0.162\t0.954\t0.836\t0.199\t0.752\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.3 - Król Maciuś Pierwszy\t0\t0.691\t0.239\t0.949\t0.742\t0.353\t0.617\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.14 - Król Maciuś na wyspie bezludnej\t0\t0.623\t0.223\t0.961\t0.853\t0.15\t0.651\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.2 - Król Maciuś Pierwszy\t0\t0.673\t0.301\t0.953\t0.829\t0.159\t0.776\t1923\t['Janusz Korczak']\tJanusz Korczak\nNubes de Humo - Remasterizado\t0\t0.618\t0.306\t0.0535\t0.995\t0.12\t0.727\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 4.2 - Król Maciuś Pierwszy\t0\t0.708\t0.226\t0.957\t0.854\t0.137\t0.634\t1923\t['Janusz Korczak']\tJanusz Korczak\nEleonore - Remasterizado\t0\t0.336\t0.415\t0.17\t0.995\t0.264\t0.76\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 8.20 - Król Maciuś Pierwszy\t0\t0.663\t0.181\t0.96\t0.828\t0.104\t0.741\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.8 - Król Maciuś na wyspie bezludnej\t0\t0.706\t0.272\t0.941\t0.786\t0.15\t0.784\t1923\t['Janusz Korczak']\tJanusz Korczak\nDans Les Jardins De L'alhambra\t0\t0.666\t0.366\t0.0682\t0.992\t0.336\t0.804\t1923\t['Robert Jysor']\tRobert Jysor\nChapter 1.7 - Król Maciuś Pierwszy\t0\t0.698\t0.256\t0.958\t0.766\t0.276\t0.798\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.11 - Król Maciuś na wyspie bezludnej\t0\t0.618\t0.203\t0.955\t0.82\t0.306\t0.523\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.14 - Król Maciuś na wyspie bezludnej\t0\t0.689\t0.235\t0.953\t0.669\t0.173\t0.759\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.20 - Król Maciuś Pierwszy\t0\t0.717\t0.18\t0.947\t0.737\t0.158\t0.758\t1923\t['Janusz Korczak']\tJanusz Korczak\nDinah\t0\t0.718\t0.506\t0.0362\t0.758\t0.0615\t0.885\t1923\t['Harry Curtis']\tHarry Curtis\nYou Broke the Only Heart That Ever Loved You\t0\t0.627\t0.415\t0.0462\t0.714\t0.164\t0.729\t1923\t['Harry Curtis']\tHarry Curtis\nChapter 2.3 - Król Maciuś Pierwszy\t0\t0.746\t0.228\t0.947\t0.8\t0.129\t0.642\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.14 - Król Maciuś Pierwszy\t0\t0.695\t0.221\t0.947\t0.701\t0.189\t0.753\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.5 - Król Maciuś Pierwszy\t0\t0.66\t0.204\t0.942\t0.87\t0.252\t0.77\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.12 - Król Maciuś na wyspie bezludnej\t0\t0.716\t0.181\t0.952\t0.814\t0.25\t0.598\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.2 - Król Maciuś Pierwszy\t0\t0.662\t0.201\t0.956\t0.752\t0.16\t0.763\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.3 - Król Maciuś Pierwszy\t0\t0.709\t0.174\t0.948\t0.757\t0.354\t0.658\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.10 - Król Maciuś Pierwszy\t0\t0.65\t0.186\t0.957\t0.735\t0.173\t0.688\t1923\t['Janusz Korczak']\tJanusz Korczak\nMy Sweet\t4\t0.741\t0.284\t0.0505\t0.927\t0.0633\t0.816\t1923\t['Louis Armstrong']\tLouis Armstrong\nChapter 1.20 & Chapter 2.1 - Król Maciuś Pierwszy\t0\t0.69\t0.145\t0.942\t0.543\t0.334\t0.718\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.19 - Król Maciuś Pierwszy\t0\t0.679\t0.237\t0.958\t0.736\t0.159\t0.748\t1923\t['Janusz Korczak']\tJanusz Korczak\nI Can't Give You Anything But Love\t0\t0.733\t0.516\t0.0475\t0.859\t0.0913\t0.779\t1923\t['Harry Curtis']\tHarry Curtis\nChapter 5.13 - Król Maciuś na wyspie bezludnej\t0\t0.682\t0.246\t0.949\t0.775\t0.245\t0.778\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.7 - Król Maciuś na wyspie bezludnej\t0\t0.683\t0.25\t0.955\t0.862\t0.263\t0.695\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.13 - Król Maciuś Pierwszy\t0\t0.726\t0.247\t0.946\t0.793\t0.223\t0.802\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.6 - Król Maciuś na wyspie bezludnej\t0\t0.642\t0.277\t0.951\t0.707\t0.22\t0.581\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.3 - Król Maciuś Pierwszy\t0\t0.683\t0.159\t0.956\t0.785\t0.287\t0.851\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.8 - Król Maciuś na wyspie bezludnej\t0\t0.691\t0.204\t0.955\t0.652\t0.355\t0.609\t1923\t['Janusz Korczak']\tJanusz Korczak\nThe Bridwell Blues\t4\t0.657\t0.136\t0.339\t0.995\t0.118\t0.637\t1923\t['Nolan Welsh']\tNolan Welsh\nChapter 3.7 - Król Maciuś Pierwszy\t0\t0.706\t0.217\t0.948\t0.743\t0.165\t0.754\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.12 - Król Maciuś Pierwszy\t0\t0.711\t0.199\t0.932\t0.83\t0.237\t0.819\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.8 - Król Maciuś Pierwszy\t0\t0.707\t0.239\t0.952\t0.79\t0.25\t0.813\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.14 - Król Maciuś na wyspie bezludnej\t0\t0.661\t0.173\t0.95\t0.83\t0.261\t0.603\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.4 - Król Maciuś Pierwszy\t0\t0.628\t0.263\t0.958\t0.736\t0.61\t0.62\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.17 - Król Maciuś Pierwszy\t0\t0.691\t0.197\t0.947\t0.845\t0.204\t0.78\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.4 - Król Maciuś Pierwszy\t0\t0.72\t0.238\t0.945\t0.848\t0.238\t0.714\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.12 - Król Maciuś na wyspie bezludnej\t0\t0.693\t0.215\t0.941\t0.714\t0.218\t0.571\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.15 - Król Maciuś Pierwszy\t0\t0.632\t0.257\t0.96\t0.781\t0.261\t0.735\t1923\t['Janusz Korczak']\tJanusz Korczak\nYou Never Miss the Water till the Well Runs Dry\t0\t0.743\t0.417\t0.0313\t0.906\t0.0982\t0.561\t1923\t['Harry Curtis']\tHarry Curtis\nChapter 5.6 - Król Maciuś na wyspie bezludnej\t0\t0.726\t0.284\t0.95\t0.772\t0.198\t0.716\t1923\t['Janusz Korczak']\tJanusz Korczak\nYou Always Hurt the One You Love\t0\t0.475\t0.294\t0.0381\t0.88\t0.109\t0.236\t1923\t['Harry Curtis']\tHarry Curtis\nChapter 2.20 - Król Maciuś Pierwszy\t0\t0.703\t0.244\t0.943\t0.731\t0.388\t0.759\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.5 - Król Maciuś Pierwszy\t0\t0.71\t0.255\t0.95\t0.797\t0.319\t0.656\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.11 - Król Maciuś Pierwszy\t0\t0.63\t0.258\t0.961\t0.826\t0.143\t0.751\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.9 - Król Maciuś Pierwszy\t0\t0.643\t0.217\t0.952\t0.821\t0.25\t0.677\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.6 - Król Maciuś Pierwszy\t0\t0.696\t0.215\t0.949\t0.837\t0.31\t0.649\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.13 - Król Maciuś Pierwszy\t0\t0.615\t0.257\t0.941\t0.828\t0.163\t0.831\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.6 - Król Maciuś Pierwszy\t0\t0.737\t0.225\t0.941\t0.85\t0.168\t0.838\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.3 - Król Maciuś na wyspie bezludnej\t0\t0.639\t0.202\t0.958\t0.715\t0.149\t0.593\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.5 - Król Maciuś na wyspie bezludnej\t0\t0.759\t0.186\t0.944\t0.705\t0.139\t0.719\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.13 - Król Maciuś na wyspie bezludnej\t0\t0.64\t0.19\t0.95\t0.755\t0.26\t0.719\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.3 - Król Maciuś Pierwszy\t0\t0.708\t0.194\t0.904\t0.789\t0.217\t0.73\t1923\t['Janusz Korczak']\tJanusz Korczak\nNegro Veio - Remasterizado\t0\t0.407\t0.407\t0.116\t0.996\t0.296\t0.711\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 1.6 - Król Maciuś Pierwszy\t0\t0.73\t0.28\t0.955\t0.754\t0.413\t0.705\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.15 - Król Maciuś na wyspie bezludnej\t0\t0.707\t0.21\t0.949\t0.802\t0.161\t0.672\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.9 - Król Maciuś na wyspie bezludnej\t0\t0.781\t0.239\t0.95\t0.596\t0.173\t0.555\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.4 - Król Maciuś Pierwszy\t0\t0.703\t0.186\t0.936\t0.819\t0.525\t0.691\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.16 - Król Maciuś na wyspie bezludnej\t0\t0.631\t0.2\t0.958\t0.708\t0.364\t0.656\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.6 - Król Maciuś na wyspie bezludnej\t0\t0.697\t0.284\t0.957\t0.784\t0.14\t0.727\t1923\t['Janusz Korczak']\tJanusz Korczak\nFin de Fiesta - Remasterizado\t0\t0.537\t0.273\t0.114\t0.994\t0.161\t0.59\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nBasin Street Blues - rec. 1928\t4\t0.604\t0.279\t0.0446\t0.986\t0.275\t0.594\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nChapter 3.20 & Chapter 4.1 - Król Maciuś na wyspie bezludnej\t0\t0.721\t0.227\t0.934\t0.593\t0.166\t0.591\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.2 - Król Maciuś na wyspie bezludnej\t0\t0.675\t0.207\t0.94\t0.594\t0.196\t0.708\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.10 - Król Maciuś na wyspie bezludnej\t0\t0.714\t0.187\t0.953\t0.737\t0.205\t0.619\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.7 - Król Maciuś Pierwszy\t0\t0.648\t0.253\t0.946\t0.802\t0.23\t0.767\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.11 - Król Maciuś Pierwszy\t0\t0.645\t0.22\t0.95\t0.818\t0.153\t0.818\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.12 - Król Maciuś na wyspie bezludnej\t0\t0.668\t0.205\t0.952\t0.838\t0.151\t0.659\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.4 - Król Maciuś na wyspie bezludnej\t0\t0.738\t0.242\t0.944\t0.777\t0.217\t0.645\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.15 - Król Maciuś Pierwszy\t0\t0.701\t0.237\t0.956\t0.721\t0.398\t0.809\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.9 - Król Maciuś Pierwszy\t0\t0.661\t0.17\t0.956\t0.717\t0.181\t0.563\t1923\t['Janusz Korczak']\tJanusz Korczak\nEl Ranchito - Remasterizado\t0\t0.52\t0.168\t0.0598\t0.995\t0.106\t0.88\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 7.4 - Król Maciuś Pierwszy\t0\t0.712\t0.25\t0.952\t0.777\t0.129\t0.67\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.18 - Król Maciuś Pierwszy\t0\t0.711\t0.219\t0.947\t0.849\t0.229\t0.679\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.4 - Król Maciuś na wyspie bezludnej\t0\t0.614\t0.238\t0.964\t0.728\t0.132\t0.593\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.13 - Król Maciuś Pierwszy\t0\t0.655\t0.276\t0.953\t0.791\t0.352\t0.78\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.10 - Król Maciuś Pierwszy\t0\t0.708\t0.277\t0.927\t0.798\t0.174\t0.813\t1923\t['Janusz Korczak']\tJanusz Korczak\nSleepy Time Gal\t0\t0.825\t0.476\t0.0328\t0.818\t0.0901\t0.785\t1923\t['Harry Curtis']\tHarry Curtis\nChapter 1.1 - Król Maciuś na wyspie bezludnej\t0\t0.695\t0.274\t0.946\t0.74\t0.216\t0.776\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.2 - Król Maciuś Pierwszy\t0\t0.672\t0.301\t0.944\t0.818\t0.247\t0.88\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.12 - Król Maciuś na wyspie bezludnej\t0\t0.755\t0.258\t0.947\t0.709\t0.208\t0.738\t1923\t['Janusz Korczak']\tJanusz Korczak\nSavoy Blues\t4\t0.811\t0.151\t0.0823\t0.986\t0.0965\t0.544\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nChapter 3.13 - Król Maciuś na wyspie bezludnej\t0\t0.651\t0.264\t0.954\t0.842\t0.154\t0.717\t1923\t['Janusz Korczak']\tJanusz Korczak\nLa Vuelta de Mi Amor - Remasterizado\t0\t0.375\t0.345\t0.337\t0.992\t0.266\t0.684\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 5.4 - Król Maciuś na wyspie bezludnej\t0\t0.706\t0.254\t0.949\t0.701\t0.24\t0.706\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.10 - Król Maciuś Pierwszy\t0\t0.632\t0.212\t0.951\t0.775\t0.176\t0.611\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.17 - Król Maciuś Pierwszy\t0\t0.702\t0.269\t0.943\t0.811\t0.365\t0.805\t1923\t['Janusz Korczak']\tJanusz Korczak\nIl N'osait Pas Se Decider\t0\t0.613\t0.457\t0.51\t0.976\t0.192\t0.706\t1923\t['Georgius']\tGeorgius\nChapter 8.8 - Król Maciuś na wyspie bezludnej\t0\t0.697\t0.283\t0.956\t0.77\t0.369\t0.681\t1923\t['Janusz Korczak']\tJanusz Korczak\nLe Roudoudou\t0\t0.599\t0.227\t0.0646\t0.995\t0.129\t0.584\t1923\t['Gaby Montbreuse']\tGaby Montbreuse\nChapter 5.11 - Król Maciuś Pierwszy\t0\t0.764\t0.183\t0.953\t0.827\t0.194\t0.85\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.13 - Król Maciuś Pierwszy\t0\t0.679\t0.176\t0.956\t0.791\t0.21\t0.623\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.3 - Król Maciuś Pierwszy\t0\t0.628\t0.218\t0.949\t0.781\t0.173\t0.706\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.2 - Król Maciuś na wyspie bezludnej\t0\t0.707\t0.264\t0.945\t0.732\t0.388\t0.785\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.10 - Król Maciuś na wyspie bezludnej\t0\t0.726\t0.226\t0.926\t0.743\t0.238\t0.6\t1923\t['Janusz Korczak']\tJanusz Korczak\nI Don't Know Enough About You\t0\t0.702\t0.372\t0.0894\t0.838\t0.13\t0.661\t1923\t['Harry Curtis']\tHarry Curtis\nNerón - Remasterizado\t0\t0.332\t0.291\t0.0555\t0.995\t0.404\t0.593\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 7.8 - Król Maciuś na wyspie bezludnej\t0\t0.626\t0.246\t0.958\t0.777\t0.192\t0.671\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.16 - Król Maciuś Pierwszy\t0\t0.74\t0.206\t0.946\t0.825\t0.281\t0.713\t1923\t['Janusz Korczak']\tJanusz Korczak\nPelele - Remasterizado\t0\t0.394\t0.327\t0.12\t0.993\t0.14\t0.779\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nSi Vous N'aimez Pas Ca\t0\t0.564\t0.247\t0.291\t0.992\t0.201\t0.807\t1923\t['Maurice Chevalier']\tMaurice Chevalier\nC'est Paris\t0\t0.496\t0.297\t0.0816\t0.969\t0.165\t0.795\t1923\t['Maurice Chevalier']\tMaurice Chevalier\nEkipa Je Na Nogama\t0\t0.406\t0.947\t0.282\t0.905\t0.821\t0.272\t1923\t['FanChants: Navijači Radnički 1923']\tFanChants: Navijači Radnički 1923\nDejeme Que la Acompañe - Remasterizado\t0\t0.433\t0.381\t0.0433\t0.994\t0.236\t0.316\t1923\t['Francisco Canaro']\tFrancisco Canaro\nPelele - Remasterizado\t0\t0.566\t0.312\t0.0853\t0.996\t0.252\t0.762\t1923\t['Francisco Canaro']\tFrancisco Canaro\nY'a Des Loups\t0\t0.511\t0.267\t0.0862\t0.995\t0.16\t0.819\t1923\t['René De Buxeuil']\tRené De Buxeuil\nChapter 8.4 - Król Maciuś Pierwszy\t0\t0.717\t0.199\t0.935\t0.859\t0.358\t0.716\t1923\t['Janusz Korczak']\tJanusz Korczak\nLinda\t0\t0.721\t0.394\t0.0651\t0.771\t0.371\t0.675\t1923\t['Harry Curtis']\tHarry Curtis\nChapter 1.14 - Król Maciuś Pierwszy\t0\t0.71\t0.227\t0.933\t0.765\t0.167\t0.782\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.5 - Król Maciuś Pierwszy\t0\t0.743\t0.209\t0.957\t0.838\t0.175\t0.714\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.6 - Król Maciuś Pierwszy\t0\t0.7\t0.219\t0.944\t0.852\t0.154\t0.766\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.7 - Król Maciuś na wyspie bezludnej\t0\t0.716\t0.214\t0.933\t0.727\t0.176\t0.645\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.17 - Król Maciuś na wyspie bezludnej\t0\t0.713\t0.218\t0.947\t0.767\t0.172\t0.505\t1923\t['Janusz Korczak']\tJanusz Korczak\nCariño Eterno Irene - Remasterizado\t0\t0.337\t0.311\t0.0549\t0.993\t0.745\t0.706\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 2.10 - Król Maciuś na wyspie bezludnej\t0\t0.63\t0.265\t0.958\t0.682\t0.135\t0.573\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.9 - Król Maciuś Pierwszy\t0\t0.771\t0.31\t0.934\t0.842\t0.135\t0.732\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.3 - Król Maciuś Pierwszy\t0\t0.729\t0.25\t0.96\t0.901\t0.201\t0.65\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.15 - Król Maciuś na wyspie bezludnej\t0\t0.714\t0.205\t0.952\t0.792\t0.254\t0.73\t1923\t['Janusz Korczak']\tJanusz Korczak\nLa Java - Remasterizado\t0\t0.512\t0.291\t0.0407\t0.994\t0.247\t0.888\t1923\t['Francisco Canaro']\tFrancisco Canaro\nLong Live Love Life\t0\t0.779\t0.121\t0.0547\t5.91E-4\t0.105\t0.335\t1923\t['Hykoski Studios']\tHykoski Studios\nChapter 10.7 - Król Maciuś Pierwszy\t0\t0.692\t0.163\t0.936\t0.636\t0.174\t0.697\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.17 - Król Maciuś Pierwszy\t0\t0.607\t0.26\t0.959\t0.817\t0.155\t0.818\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.10 - Król Maciuś Pierwszy\t0\t0.709\t0.242\t0.947\t0.904\t0.185\t0.71\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.17 - Król Maciuś na wyspie bezludnej\t0\t0.692\t0.215\t0.958\t0.803\t0.117\t0.627\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.15 - Król Maciuś Pierwszy\t0\t0.672\t0.258\t0.957\t0.701\t0.239\t0.575\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.11 - Król Maciuś na wyspie bezludnej\t0\t0.745\t0.228\t0.954\t0.845\t0.154\t0.719\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.13 - Król Maciuś na wyspie bezludnej\t0\t0.632\t0.266\t0.959\t0.829\t0.144\t0.706\t1923\t['Janusz Korczak']\tJanusz Korczak\nOse Anna\t0\t0.55\t0.333\t0.0543\t0.973\t0.213\t0.822\t1923\t['Maurice Chevalier']\tMaurice Chevalier\nChapter 10.11 - Król Maciuś Pierwszy\t0\t0.724\t0.203\t0.933\t0.743\t0.147\t0.654\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.7 - Król Maciuś Pierwszy\t0\t0.634\t0.216\t0.955\t0.832\t0.268\t0.78\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.14 - Król Maciuś na wyspie bezludnej\t0\t0.682\t0.219\t0.934\t0.752\t0.129\t0.697\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.6 - Król Maciuś Pierwszy\t0\t0.696\t0.263\t0.94\t0.83\t0.144\t0.786\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.5 - Król Maciuś na wyspie bezludnej\t0\t0.671\t0.193\t0.951\t0.748\t0.232\t0.695\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.19 - Król Maciuś Pierwszy\t0\t0.716\t0.225\t0.958\t0.888\t0.202\t0.706\t1923\t['Janusz Korczak']\tJanusz Korczak\nJuan de los Santos Arena - Remasterizado\t0\t0.345\t0.237\t0.0527\t0.986\t0.168\t0.36\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 1.19 & Chapter 2.1 - Król Maciuś na wyspie bezludnej\t0\t0.693\t0.233\t0.942\t0.719\t0.144\t0.598\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.5 - Król Maciuś Pierwszy\t0\t0.676\t0.136\t0.945\t0.544\t0.289\t0.589\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.15 - Król Maciuś na wyspie bezludnej\t0\t0.664\t0.196\t0.959\t0.835\t0.145\t0.646\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.12 - Król Maciuś na wyspie bezludnej\t0\t0.62\t0.196\t0.96\t0.588\t0.334\t0.601\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.8 - Król Maciuś Pierwszy\t0\t0.717\t0.226\t0.939\t0.838\t0.142\t0.82\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.12 - Król Maciuś Pierwszy\t0\t0.702\t0.275\t0.927\t0.797\t0.196\t0.726\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.11 - Król Maciuś na wyspie bezludnej\t0\t0.74\t0.197\t0.953\t0.785\t0.368\t0.672\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.6 - Król Maciuś Pierwszy\t0\t0.672\t0.198\t0.952\t0.757\t0.195\t0.732\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.11 - Król Maciuś na wyspie bezludnej\t0\t0.721\t0.259\t0.931\t0.816\t0.159\t0.744\t1923\t['Janusz Korczak']\tJanusz Korczak\nPut 'Em Down Blues\t4\t0.666\t0.278\t0.0926\t0.981\t0.107\t0.837\t1923\t['Louis Armstrong & His Hot Seven']\tLouis Armstrong & His Hot Seven\nChapter 3.5 - Król Maciuś na wyspie bezludnej\t0\t0.72\t0.236\t0.904\t0.777\t0.124\t0.853\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.18 - Król Maciuś na wyspie bezludnej\t0\t0.718\t0.273\t0.95\t0.688\t0.175\t0.616\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.18 - Król Maciuś na wyspie bezludnej\t0\t0.683\t0.215\t0.957\t0.767\t0.215\t0.683\t1923\t['Janusz Korczak']\tJanusz Korczak\nLos Ojazos de Mi Suegra - Remasterizado\t0\t0.431\t0.241\t0.0651\t0.996\t0.153\t0.278\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 1.2 - Król Maciuś na wyspie bezludnej\t0\t0.722\t0.326\t0.92\t0.805\t0.14\t0.786\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.2 - Król Maciuś Pierwszy\t0\t0.718\t0.22\t0.943\t0.814\t0.123\t0.626\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.2 - Król Maciuś Pierwszy\t0\t0.752\t0.256\t0.961\t0.836\t0.32\t0.718\t1923\t['Janusz Korczak']\tJanusz Korczak\nLa Ratonera - Remasterizado\t0\t0.6\t0.329\t0.0683\t0.994\t0.148\t0.564\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 6.16 - Król Maciuś Pierwszy\t0\t0.744\t0.245\t0.945\t0.824\t0.248\t0.775\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.5 - Król Maciuś na wyspie bezludnej\t0\t0.693\t0.255\t0.944\t0.732\t0.226\t0.681\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.19 - Król Maciuś Pierwszy\t0\t0.701\t0.203\t0.959\t0.691\t0.283\t0.694\t1923\t['Janusz Korczak']\tJanusz Korczak\nGuitar Rag - Remastered\t0\t0.464\t0.402\t0.029\t0.841\t0.189\t0.536\t1923\t['Sylvester Weaver']\tSylvester Weaver\nChapter 5.21 & Chapter 6.1 - Król Maciuś Pierwszy\t0\t0.734\t0.262\t0.959\t0.719\t0.199\t0.691\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.15 - Król Maciuś Pierwszy\t0\t0.629\t0.157\t0.96\t0.743\t0.206\t0.691\t1923\t['Janusz Korczak']\tJanusz Korczak\nBeis Ep\t0\t0.788\t0.898\t0.0704\t6.54E-5\t0.0393\t0.77\t1923\t['Macarti']\tMacarti\nChapter 10.6 - Król Maciuś Pierwszy\t0\t0.609\t0.196\t0.939\t0.794\t0.242\t0.736\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.8 - Król Maciuś na wyspie bezludnej\t0\t0.616\t0.271\t0.96\t0.872\t0.183\t0.496\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.9 - Król Maciuś na wyspie bezludnej\t0\t0.738\t0.228\t0.953\t0.806\t0.0927\t0.69\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.13 - Król Maciuś Pierwszy\t0\t0.654\t0.154\t0.955\t0.866\t0.297\t0.725\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.10 - Król Maciuś Pierwszy\t0\t0.696\t0.181\t0.932\t0.845\t0.139\t0.789\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.7 - Król Maciuś Pierwszy\t0\t0.612\t0.216\t0.96\t0.886\t0.157\t0.728\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.16 - Król Maciuś Pierwszy\t0\t0.651\t0.198\t0.908\t0.863\t0.154\t0.708\t1923\t['Janusz Korczak']\tJanusz Korczak\nRien Qu'une Nuit\t0\t0.219\t0.301\t0.0457\t0.988\t0.159\t0.473\t1923\t['Emma Liebel']\tEmma Liebel\nChapter 9.12 - Król Maciuś Pierwszy\t0\t0.705\t0.204\t0.941\t0.744\t0.204\t0.712\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.9 - Król Maciuś na wyspie bezludnej\t0\t0.615\t0.184\t0.956\t0.694\t0.188\t0.664\t1923\t['Janusz Korczak']\tJanusz Korczak\nSombras - Remasterizado\t0\t0.459\t0.129\t0.0847\t0.995\t0.436\t0.727\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nGlow Worm\t0\t0.74\t0.512\t0.0507\t0.757\t0.361\t0.837\t1923\t['Harry Curtis']\tHarry Curtis\nAime Moi Emma\t0\t0.57\t0.277\t0.0648\t0.962\t0.318\t0.801\t1923\t['Dranem']\tDranem\nCouplets De La Haut\t0\t0.481\t0.221\t0.163\t0.995\t0.47\t0.743\t1923\t['Maurice Chevalier']\tMaurice Chevalier\nChapter 4.19 - Król Maciuś Pierwszy\t0\t0.727\t0.225\t0.946\t0.799\t0.289\t0.759\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.13 - Król Maciuś na wyspie bezludnej\t0\t0.632\t0.27\t0.955\t0.754\t0.217\t0.679\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.20 & Chapter 11.1 - Król Maciuś Pierwszy\t0\t0.699\t0.233\t0.952\t0.816\t0.297\t0.748\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.17 - Król Maciuś na wyspie bezludnej\t0\t0.701\t0.218\t0.937\t0.74\t0.275\t0.769\t1923\t['Janusz Korczak']\tJanusz Korczak\nCamel - Remasterizado\t0\t0.323\t0.458\t0.0526\t0.97\t0.112\t0.542\t1923\t['Francisco Canaro']\tFrancisco Canaro\nChapter 4.6 - Król Maciuś na wyspie bezludnej\t0\t0.706\t0.236\t0.963\t0.735\t0.267\t0.612\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.6 - Król Maciuś Pierwszy\t0\t0.742\t0.216\t0.954\t0.683\t0.375\t0.723\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.18 - Król Maciuś Pierwszy\t0\t0.704\t0.229\t0.951\t0.671\t0.316\t0.652\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.3 - Król Maciuś Pierwszy\t0\t0.72\t0.251\t0.953\t0.743\t0.205\t0.776\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.8 - Król Maciuś Pierwszy\t0\t0.636\t0.231\t0.957\t0.881\t0.312\t0.742\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.7 - Król Maciuś na wyspie bezludnej\t0\t0.716\t0.247\t0.932\t0.699\t0.135\t0.685\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.10 - Król Maciuś Pierwszy\t0\t0.689\t0.261\t0.958\t0.669\t0.192\t0.511\t1923\t['Janusz Korczak']\tJanusz Korczak\nGreat is Thy Faithfulness\t0\t0.628\t0.091\t0.0398\t0.784\t0.102\t0.152\t1923\t['4509 STARPASS Prodcutions']\t4509 STARPASS Prodcutions\nChapter 9.15 - Król Maciuś Pierwszy\t0\t0.691\t0.254\t0.957\t0.743\t0.134\t0.723\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.14 - Król Maciuś na wyspie bezludnej\t0\t0.716\t0.262\t0.944\t0.808\t0.323\t0.813\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.20 & Chapter 7.1 - Król Maciuś na wyspie bezludnej\t0\t0.696\t0.239\t0.95\t0.765\t0.13\t0.746\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.10 - Król Maciuś Pierwszy\t0\t0.633\t0.261\t0.959\t0.797\t0.226\t0.768\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.19 - Król Maciuś Pierwszy\t0\t0.72\t0.252\t0.947\t0.784\t0.237\t0.638\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.2 - Król Maciuś na wyspie bezludnej\t0\t0.617\t0.257\t0.963\t0.711\t0.272\t0.636\t1923\t['Janusz Korczak']\tJanusz Korczak\nQuand On Aime On A Toujours Vingt Ans\t0\t0.374\t0.383\t0.188\t0.987\t0.241\t0.524\t1923\t['Perchicot']\tPerchicot\nChapter 6.7 - Król Maciuś na wyspie bezludnej\t0\t0.67\t0.191\t0.955\t0.838\t0.151\t0.673\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.8 - Król Maciuś Pierwszy\t0\t0.611\t0.234\t0.952\t0.762\t0.32\t0.71\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.14 - Król Maciuś Pierwszy\t0\t0.71\t0.186\t0.949\t0.634\t0.285\t0.674\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.8 - Król Maciuś Pierwszy\t0\t0.711\t0.217\t0.949\t0.826\t0.24\t0.786\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.14 - Król Maciuś Pierwszy\t0\t0.701\t0.253\t0.954\t0.803\t0.208\t0.697\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.17 - Król Maciuś Pierwszy\t0\t0.76\t0.258\t0.956\t0.833\t0.0923\t0.765\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.9 - Król Maciuś na wyspie bezludnej\t0\t0.72\t0.231\t0.925\t0.75\t0.167\t0.749\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.19 - Król Maciuś na wyspie bezludnej\t0\t0.733\t0.245\t0.95\t0.721\t0.24\t0.764\t1923\t['Janusz Korczak']\tJanusz Korczak\nBye Bye Blackbird\t0\t0.667\t0.408\t0.0286\t0.749\t0.0748\t0.758\t1923\t['Harry Curtis']\tHarry Curtis\nChapter 4.14 - Król Maciuś Pierwszy\t0\t0.679\t0.238\t0.959\t0.702\t0.361\t0.685\t1923\t['Janusz Korczak']\tJanusz Korczak\nPaper Doll\t0\t0.489\t0.392\t0.0333\t0.869\t0.0618\t0.552\t1923\t['Harry Curtis']\tHarry Curtis\nChapter 11.12 - Król Maciuś Pierwszy\t0\t0.634\t0.241\t0.957\t0.855\t0.185\t0.601\t1923\t['Janusz Korczak']\tJanusz Korczak\nC'est Jeune Et Ca N'sait Pas\t0\t0.687\t0.173\t0.0772\t0.993\t0.86\t0.765\t1923\t['Fortugé']\tFortugé\nChapter 2.16 - Król Maciuś Pierwszy\t0\t0.627\t0.274\t0.961\t0.823\t0.167\t0.671\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.16 - Król Maciuś na wyspie bezludnej\t0\t0.643\t0.189\t0.952\t0.696\t0.139\t0.651\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.13 - Król Maciuś Pierwszy\t0\t0.698\t0.247\t0.947\t0.832\t0.391\t0.645\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.8 - Król Maciuś Pierwszy\t0\t0.704\t0.256\t0.943\t0.762\t0.219\t0.674\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.17 - Król Maciuś Pierwszy\t0\t0.694\t0.18\t0.948\t0.712\t0.143\t0.741\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.16 - Król Maciuś na wyspie bezludnej\t0\t0.669\t0.244\t0.954\t0.717\t0.129\t0.777\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.19 - Król Maciuś Pierwszy\t0\t0.686\t0.269\t0.941\t0.834\t0.191\t0.81\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 11.10 - Król Maciuś Pierwszy\t0\t0.666\t0.22\t0.945\t0.898\t0.367\t0.754\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 4.9 - Król Maciuś Pierwszy\t0\t0.741\t0.223\t0.957\t0.74\t0.205\t0.805\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.19 - Król Maciuś Pierwszy\t0\t0.709\t0.236\t0.947\t0.845\t0.145\t0.769\t1923\t['Janusz Korczak']\tJanusz Korczak\nAve María - Remasterizado\t0\t0.684\t0.262\t0.0666\t0.996\t0.149\t0.814\t1923\t['Francisco Canaro']\tFrancisco Canaro\nLa Cabeza del Italiano - Remasterizado\t0\t0.335\t0.096\t0.0883\t0.996\t0.158\t0.659\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nVeni Pebeta - Remasterizado\t0\t0.396\t0.246\t0.0565\t0.99\t0.165\t0.668\t1923\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 3.17 - Król Maciuś na wyspie bezludnej\t0\t0.666\t0.278\t0.942\t0.91\t0.178\t0.684\t1923\t['Janusz Korczak']\tJanusz Korczak\nGuitar Blues - Remastered\t0\t0.352\t0.404\t0.151\t0.983\t0.452\t0.247\t1923\t['Sylvester Weaver']\tSylvester Weaver\nChapter 3.18 - Król Maciuś na wyspie bezludnej\t0\t0.692\t0.235\t0.951\t0.913\t0.113\t0.658\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.18 - Król Maciuś na wyspie bezludnej\t0\t0.679\t0.256\t0.958\t0.605\t0.345\t0.505\t1923\t['Janusz Korczak']\tJanusz Korczak\nSacate la Caretita - Remasterizado\t0\t0.594\t0.231\t0.0608\t0.992\t0.148\t0.588\t1923\t['Francisco Canaro']\tFrancisco Canaro\nYou Can't Fool a Broken Heart\t0\t0.724\t0.323\t0.0303\t0.815\t0.0997\t0.488\t1923\t['Harry Curtis']\tHarry Curtis\nBig Butter And Egg Man\t4\t0.699\t0.273\t0.0886\t0.995\t0.108\t0.895\t1923\t['Louis Armstrong & His Hot Five']\tLouis Armstrong & His Hot Five\nChapter 10.9 - Król Maciuś Pierwszy\t0\t0.724\t0.188\t0.956\t0.814\t0.0875\t0.718\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.9 - Król Maciuś Pierwszy\t0\t0.672\t0.224\t0.954\t0.772\t0.233\t0.849\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 10.8 - Król Maciuś Pierwszy\t0\t0.674\t0.202\t0.934\t0.831\t0.19\t0.81\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.9 - Król Maciuś na wyspie bezludnej\t0\t0.716\t0.22\t0.935\t0.822\t0.173\t0.626\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 8.15 - Król Maciuś na wyspie bezludnej\t0\t0.627\t0.202\t0.953\t0.578\t0.173\t0.556\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.20 & Chapter 3.1 - Król Maciuś na wyspie bezludnej\t0\t0.708\t0.251\t0.931\t0.815\t0.12\t0.584\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 6.9 - Król Maciuś Pierwszy\t0\t0.718\t0.269\t0.923\t0.837\t0.26\t0.881\t1923\t['Janusz Korczak']\tJanusz Korczak\nThe Four Seasons: 'Winter' in F Minor, RV 297: Allegro non Molto - Choral Version\t0\t0.419\t0.114\t0.0476\t0.994\t0.0681\t0.0661\t1923\t['Qatar Concert Choir', 'Giovanni Pasini']\tQatar Concert Choir\nThe Four Seasons: 'Winter' in F Minor, RV 297: Allegro non Molto - Choral Version\t0\t0.419\t0.114\t0.0476\t0.994\t0.0681\t0.0661\t1923\t['Qatar Concert Choir', 'Giovanni Pasini']\tGiovanni Pasini\nChapter 10.10 - Król Maciuś Pierwszy\t0\t0.764\t0.236\t0.922\t0.81\t0.144\t0.767\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 3.16 - Król Maciuś na wyspie bezludnej\t0\t0.735\t0.261\t0.95\t0.884\t0.129\t0.806\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 7.15 - Król Maciuś Pierwszy\t0\t0.651\t0.198\t0.958\t0.885\t0.223\t0.641\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 2.12 - Król Maciuś na wyspie bezludnej\t0\t0.714\t0.273\t0.946\t0.874\t0.13\t0.558\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 9.10 - Król Maciuś Pierwszy\t0\t0.712\t0.283\t0.936\t0.804\t0.198\t0.815\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 1.3 - Król Maciuś na wyspie bezludnej\t0\t0.672\t0.337\t0.956\t0.873\t0.287\t0.77\t1923\t['Janusz Korczak']\tJanusz Korczak\nMa Chanson\t0\t0.515\t0.219\t0.108\t0.955\t0.31\t0.664\t1923\t['Eugénie Buffet', 'René De Buxeuil']\tEugénie Buffet\nMa Chanson\t0\t0.515\t0.219\t0.108\t0.955\t0.31\t0.664\t1923\t['Eugénie Buffet', 'René De Buxeuil']\tRené De Buxeuil\nChapter 8.2 - Król Maciuś Pierwszy\t0\t0.723\t0.161\t0.95\t0.871\t0.153\t0.761\t1923\t['Janusz Korczak']\tJanusz Korczak\nSi Tu Vois Ma Tante\t0\t0.646\t0.345\t0.072\t0.995\t0.196\t0.827\t1923\t['Dréan']\tDréan\nChapter 1.1 - Król Maciuś Pierwszy\t0\t0.629\t0.251\t0.96\t0.593\t0.384\t0.591\t1923\t['Janusz Korczak']\tJanusz Korczak\nChapter 5.8 - Król Maciuś na wyspie bezludnej\t0\t0.74\t0.211\t0.956\t0.743\t0.328\t0.676\t1923\t['Janusz Korczak']\tJanusz Korczak\nTristeza Criolla - Remasterizado\t0\t0.291\t0.153\t0.0586\t0.995\t0.187\t0.564\t1924\t['Ignacio Corsini']\tIgnacio Corsini\nA Lo Lejos - Remasterizado\t0\t0.439\t0.158\t0.0732\t0.989\t0.109\t0.746\t1924\t['Ignacio Corsini']\tIgnacio Corsini\nFantasio - Remasterizado\t0\t0.589\t0.254\t0.0576\t0.996\t0.255\t0.352\t1924\t['Francisco Canaro']\tFrancisco Canaro\nChapter 98 - The Unlit Lamp\t0\t0.626\t0.296\t0.944\t0.738\t0.123\t0.364\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 98 - The Unlit Lamp\t0\t0.626\t0.296\t0.944\t0.738\t0.123\t0.364\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 98 - The Unlit Lamp\t0\t0.626\t0.296\t0.944\t0.738\t0.123\t0.364\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 146 - The Unlit Lamp\t0\t0.634\t0.332\t0.919\t0.604\t0.148\t0.503\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 146 - The Unlit Lamp\t0\t0.634\t0.332\t0.919\t0.604\t0.148\t0.503\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 146 - The Unlit Lamp\t0\t0.634\t0.332\t0.919\t0.604\t0.148\t0.503\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nSundown Blues - Remastered\t0\t0.457\t0.335\t0.0552\t0.995\t0.0889\t0.573\t1924\t['Daddy Stovepipe']\tDaddy Stovepipe\nChapter 173 - The Unlit Lamp\t0\t0.749\t0.298\t0.941\t0.802\t0.126\t0.388\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 173 - The Unlit Lamp\t0\t0.749\t0.298\t0.941\t0.802\t0.126\t0.388\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 173 - The Unlit Lamp\t0\t0.749\t0.298\t0.941\t0.802\t0.126\t0.388\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nEl Vazquito - Remasterizado\t0\t0.686\t0.235\t0.104\t0.996\t0.307\t0.556\t1924\t['Francisco Canaro']\tFrancisco Canaro\nA Sun-Kist Cottage In California\t0\t0.396\t0.28\t0.049\t0.995\t0.0671\t0.799\t1924\t['George Olsen']\tGeorge Olsen\nChapter 32 - The Unlit Lamp\t0\t0.717\t0.289\t0.923\t0.717\t0.105\t0.342\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 32 - The Unlit Lamp\t0\t0.717\t0.289\t0.923\t0.717\t0.105\t0.342\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 32 - The Unlit Lamp\t0\t0.717\t0.289\t0.923\t0.717\t0.105\t0.342\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 109 - The Unlit Lamp\t0\t0.61\t0.28\t0.919\t0.679\t0.145\t0.416\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 109 - The Unlit Lamp\t0\t0.61\t0.28\t0.919\t0.679\t0.145\t0.416\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 109 - The Unlit Lamp\t0\t0.61\t0.28\t0.919\t0.679\t0.145\t0.416\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nKi Ki - Remasterizado\t0\t0.524\t0.532\t0.385\t0.996\t0.131\t0.63\t1924\t['Francisco Canaro']\tFrancisco Canaro\nSentimental Journey\t2\t0.581\t0.132\t0.033\t0.896\t0.105\t0.315\t1924\t['The Chenille Sisters', \"James Dapogny's Chicago Jazz Band\"]\tThe Chenille Sisters\nSentimental Journey\t2\t0.581\t0.132\t0.033\t0.896\t0.105\t0.315\t1924\t['The Chenille Sisters', \"James Dapogny's Chicago Jazz Band\"]\t\"James Dapognys Chicago Jazz Band\"\nChapter 122 - The Unlit Lamp\t0\t0.695\t0.309\t0.916\t0.729\t0.213\t0.424\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 122 - The Unlit Lamp\t0\t0.695\t0.309\t0.916\t0.729\t0.213\t0.424\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 122 - The Unlit Lamp\t0\t0.695\t0.309\t0.916\t0.729\t0.213\t0.424\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nLa Cabeza del Italiano - Remasterizado\t0\t0.601\t0.177\t0.0701\t0.996\t0.265\t0.397\t1924\t['Francisco Canaro']\tFrancisco Canaro\nChapter 87 - The Unlit Lamp\t0\t0.728\t0.301\t0.919\t0.663\t0.129\t0.516\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 87 - The Unlit Lamp\t0\t0.728\t0.301\t0.919\t0.663\t0.129\t0.516\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 87 - The Unlit Lamp\t0\t0.728\t0.301\t0.919\t0.663\t0.129\t0.516\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nPelco y Trama\t0\t0.755\t0.65\t0.42\t0.612\t0.101\t0.276\t1924\t['Jailess']\tJailess\nUna Noche en París - Remasterizado\t0\t0.682\t0.3\t0.0607\t0.995\t0.14\t0.619\t1924\t['Francisco Canaro']\tFrancisco Canaro\nSobre el Pucho - Remasterizado\t0\t0.605\t0.154\t0.0626\t0.996\t0.167\t0.688\t1924\t['Francisco Canaro']\tFrancisco Canaro\nOlga - Remasterizado\t0\t0.332\t0.278\t0.0748\t0.987\t0.177\t0.547\t1924\t['Ignacio Corsini']\tIgnacio Corsini\nLow Gravy\t2\t0.712\t0.312\t0.0552\t0.818\t0.171\t0.542\t1924\t['The Chenille Sisters', \"James Dapogny's Chicago Jazz Band\"]\tThe Chenille Sisters\nLow Gravy\t2\t0.712\t0.312\t0.0552\t0.818\t0.171\t0.542\t1924\t['The Chenille Sisters', \"James Dapogny's Chicago Jazz Band\"]\t\"James Dapognys Chicago Jazz Band\"\nChapter 100 - The Unlit Lamp\t0\t0.614\t0.269\t0.952\t0.621\t0.174\t0.371\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 100 - The Unlit Lamp\t0\t0.614\t0.269\t0.952\t0.621\t0.174\t0.371\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 100 - The Unlit Lamp\t0\t0.614\t0.269\t0.952\t0.621\t0.174\t0.371\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 13 - The Unlit Lamp\t0\t0.702\t0.326\t0.882\t0.658\t0.175\t0.427\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 13 - The Unlit Lamp\t0\t0.702\t0.326\t0.882\t0.658\t0.175\t0.427\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 13 - The Unlit Lamp\t0\t0.702\t0.326\t0.882\t0.658\t0.175\t0.427\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nJuan de los Santos Arena - Remasterizado\t0\t0.408\t0.198\t0.0552\t0.98\t0.114\t0.15\t1924\t['Ignacio Corsini']\tIgnacio Corsini\nDía de Lluvia - Remasterizado\t0\t0.463\t0.24\t0.127\t0.996\t0.225\t0.692\t1924\t['Francisco Canaro']\tFrancisco Canaro\nChapter 152 - The Unlit Lamp\t0\t0.71\t0.299\t0.933\t0.702\t0.108\t0.396\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 152 - The Unlit Lamp\t0\t0.71\t0.299\t0.933\t0.702\t0.108\t0.396\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 152 - The Unlit Lamp\t0\t0.71\t0.299\t0.933\t0.702\t0.108\t0.396\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 31 - The Unlit Lamp\t0\t0.695\t0.315\t0.937\t0.696\t0.107\t0.361\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 31 - The Unlit Lamp\t0\t0.695\t0.315\t0.937\t0.696\t0.107\t0.361\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 31 - The Unlit Lamp\t0\t0.695\t0.315\t0.937\t0.696\t0.107\t0.361\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nLa Sulamita - Remasterizado\t0\t0.425\t0.652\t0.0707\t0.996\t0.715\t0.71\t1924\t['Francisco Canaro']\tFrancisco Canaro\nChapter 74 - The Unlit Lamp\t0\t0.756\t0.302\t0.952\t0.721\t0.149\t0.533\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 74 - The Unlit Lamp\t0\t0.756\t0.302\t0.952\t0.721\t0.149\t0.533\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 74 - The Unlit Lamp\t0\t0.756\t0.302\t0.952\t0.721\t0.149\t0.533\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 19 - The Unlit Lamp\t0\t0.646\t0.275\t0.943\t0.724\t0.144\t0.464\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 19 - The Unlit Lamp\t0\t0.646\t0.275\t0.943\t0.724\t0.144\t0.464\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 19 - The Unlit Lamp\t0\t0.646\t0.275\t0.943\t0.724\t0.144\t0.464\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nFrancesita - Remasterizado\t0\t0.371\t0.429\t0.367\t0.996\t0.193\t0.614\t1924\t['Francisco Canaro']\tFrancisco Canaro\nLes grains de beauté\t0\t0.464\t0.277\t0.0578\t0.994\t0.0991\t0.834\t1924\t['Adolphe Bérard']\tAdolphe Bérard\nBlack and Tan Fantasy\t0\t0.43\t0.181\t0.0624\t0.975\t0.226\t0.393\t1924\t['Duke Ellington & His Washingtonians']\tDuke Ellington & His Washingtonians\nI Want To Be Happy\t0\t0.687\t0.557\t0.0594\t0.671\t0.0353\t0.809\t1924\t['The Chenille Sisters', \"James Dapogny's Chicago Jazz Band\"]\tThe Chenille Sisters\nI Want To Be Happy\t0\t0.687\t0.557\t0.0594\t0.671\t0.0353\t0.809\t1924\t['The Chenille Sisters', \"James Dapogny's Chicago Jazz Band\"]\t\"James Dapognys Chicago Jazz Band\"\nJump For Joy\t0\t0.626\t0.452\t0.0703\t0.969\t0.119\t0.835\t1924\t['Hot Lips Page']\tHot Lips Page\nRhapsody in Blue (for piano 4 hands)\t0\t0.372\t0.0909\t0.0557\t0.984\t0.077\t0.101\t1924\t['Dombrova Piano Duo']\tDombrova Piano Duo\nChapter 23 - The Unlit Lamp\t0\t0.703\t0.285\t0.937\t0.736\t0.104\t0.38\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 23 - The Unlit Lamp\t0\t0.703\t0.285\t0.937\t0.736\t0.104\t0.38\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 23 - The Unlit Lamp\t0\t0.703\t0.285\t0.937\t0.736\t0.104\t0.38\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 210 - The Unlit Lamp\t0\t0.706\t0.307\t0.941\t0.663\t0.105\t0.379\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 210 - The Unlit Lamp\t0\t0.706\t0.307\t0.941\t0.663\t0.105\t0.379\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 210 - The Unlit Lamp\t0\t0.706\t0.307\t0.941\t0.663\t0.105\t0.379\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nSin Consuelo - Remasterizado\t0\t0.508\t0.491\t0.219\t0.996\t0.192\t0.765\t1924\t['Francisco Canaro']\tFrancisco Canaro\nBarrel House Blues\t0\t0.475\t0.291\t0.0335\t0.993\t0.112\t0.245\t1924\t['Ed Andrews']\tEd Andrews\nJ'aime pas ca\t0\t0.723\t0.316\t0.0664\t0.985\t0.167\t0.843\t1924\t['Georges Milton']\tGeorges Milton\nChapter 55 - The Unlit Lamp\t0\t0.662\t0.295\t0.94\t0.727\t0.0905\t0.445\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 55 - The Unlit Lamp\t0\t0.662\t0.295\t0.94\t0.727\t0.0905\t0.445\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 55 - The Unlit Lamp\t0\t0.662\t0.295\t0.94\t0.727\t0.0905\t0.445\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nWild Women Don't Have the Blues\t0\t0.59\t0.138\t0.0628\t0.772\t0.12\t0.296\t1924\t['Sara Gee & Ramblin Matt']\tSara Gee & Ramblin Matt\n(What Did I Do to Be So) Black and Blue\t1\t0.657\t0.176\t0.0573\t0.992\t0.273\t0.482\t1924\t['Louis Armstrong']\tLouis Armstrong\nChapter 134 - The Unlit Lamp\t0\t0.62\t0.328\t0.952\t0.756\t0.109\t0.407\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 134 - The Unlit Lamp\t0\t0.62\t0.328\t0.952\t0.756\t0.109\t0.407\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 134 - The Unlit Lamp\t0\t0.62\t0.328\t0.952\t0.756\t0.109\t0.407\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nOh París - Remasterizado\t0\t0.588\t0.316\t0.0668\t0.996\t0.228\t0.893\t1924\t['Francisco Canaro']\tFrancisco Canaro\nChapter 22 - The Unlit Lamp\t0\t0.611\t0.311\t0.951\t0.728\t0.197\t0.339\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 22 - The Unlit Lamp\t0\t0.611\t0.311\t0.951\t0.728\t0.197\t0.339\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 22 - The Unlit Lamp\t0\t0.611\t0.311\t0.951\t0.728\t0.197\t0.339\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nEl Flechazo - Remasterizado\t0\t0.634\t0.438\t0.253\t0.996\t0.273\t0.588\t1924\t['Francisco Canaro']\tFrancisco Canaro\nChapter 208 - The Unlit Lamp\t0\t0.687\t0.29\t0.937\t0.698\t0.125\t0.359\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 208 - The Unlit Lamp\t0\t0.687\t0.29\t0.937\t0.698\t0.125\t0.359\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 208 - The Unlit Lamp\t0\t0.687\t0.29\t0.937\t0.698\t0.125\t0.359\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 84 - The Unlit Lamp\t0\t0.711\t0.289\t0.937\t0.741\t0.167\t0.582\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 84 - The Unlit Lamp\t0\t0.711\t0.289\t0.937\t0.741\t0.167\t0.582\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 84 - The Unlit Lamp\t0\t0.711\t0.289\t0.937\t0.741\t0.167\t0.582\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nAvec bidasse\t0\t0.656\t0.238\t0.259\t0.931\t0.0511\t0.907\t1924\t['Johann Sebastian Bach']\tJohann Sebastian Bach\nGemi Kalkar Sular Aka\t0\t0.382\t0.222\t0.0712\t0.992\t0.12\t0.515\t1924\t['Bayan Sultan']\tBayan Sultan\nSentimiento Gaucho - Remasterizado\t0\t0.533\t0.219\t0.0827\t0.996\t0.31\t0.428\t1924\t['Francisco Canaro']\tFrancisco Canaro\nGato\t0\t0.187\t0.127\t0.0461\t0.947\t0.121\t0.354\t1924\t['Iván Rolón']\tIván Rolón\nRum and Coca Cola\t1\t0.657\t0.455\t0.0547\t0.624\t0.214\t0.96\t1924\t['The Chenille Sisters', \"James Dapogny's Chicago Jazz Band\"]\tThe Chenille Sisters\nRum and Coca Cola\t1\t0.657\t0.455\t0.0547\t0.624\t0.214\t0.96\t1924\t['The Chenille Sisters', \"James Dapogny's Chicago Jazz Band\"]\t\"James Dapognys Chicago Jazz Band\"\nBye Bye Blues\t0\t0.647\t0.587\t0.0638\t0.601\t0.128\t0.552\t1924\t['The Chenille Sisters', \"James Dapogny's Chicago Jazz Band\"]\tThe Chenille Sisters\nBye Bye Blues\t0\t0.647\t0.587\t0.0638\t0.601\t0.128\t0.552\t1924\t['The Chenille Sisters', \"James Dapogny's Chicago Jazz Band\"]\t\"James Dapognys Chicago Jazz Band\"\nPato Alegre - Remasterizado\t0\t0.369\t0.506\t0.182\t0.996\t0.37\t0.752\t1924\t['Francisco Canaro']\tFrancisco Canaro\nIt Had To Be You\t0\t0.406\t0.37\t0.0418\t0.947\t0.345\t0.151\t1924\t['Marie Earth Heart']\tMarie Earth Heart\nPero Hay Una Melena - Remasterizado\t0\t0.628\t0.403\t0.0352\t0.996\t0.693\t0.949\t1924\t['Francisco Canaro']\tFrancisco Canaro\nIls n'ont pas ca\t0\t0.676\t0.467\t0.165\t0.991\t0.219\t0.726\t1924\t['Mistinguett']\tMistinguett\nNancy\t0\t0.666\t0.329\t0.033\t0.995\t0.0813\t0.689\t1924\t['George Olsen']\tGeorge Olsen\nChapter 157 - The Unlit Lamp\t0\t0.628\t0.321\t0.954\t0.593\t0.155\t0.31\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 157 - The Unlit Lamp\t0\t0.628\t0.321\t0.954\t0.593\t0.155\t0.31\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 157 - The Unlit Lamp\t0\t0.628\t0.321\t0.954\t0.593\t0.155\t0.31\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nI Got Rhythm\t0\t0.589\t0.895\t0.103\t0.821\t0.593\t0.745\t1924\t['Lionel Hampton Orchestra']\tLionel Hampton Orchestra\nGalletita - Remasterizado\t0\t0.559\t0.138\t0.117\t0.995\t0.238\t0.494\t1924\t['Ignacio Corsini']\tIgnacio Corsini\nChapter 67 - The Unlit Lamp\t0\t0.625\t0.289\t0.946\t0.802\t0.146\t0.565\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 67 - The Unlit Lamp\t0\t0.625\t0.289\t0.946\t0.802\t0.146\t0.565\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 67 - The Unlit Lamp\t0\t0.625\t0.289\t0.946\t0.802\t0.146\t0.565\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 198 - The Unlit Lamp\t0\t0.694\t0.349\t0.931\t0.694\t0.108\t0.343\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 198 - The Unlit Lamp\t0\t0.694\t0.349\t0.931\t0.694\t0.108\t0.343\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 198 - The Unlit Lamp\t0\t0.694\t0.349\t0.931\t0.694\t0.108\t0.343\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nPuentecito - Remasterizado\t0\t0.585\t0.306\t0.0774\t0.996\t0.286\t0.623\t1924\t['Francisco Canaro']\tFrancisco Canaro\nChapter 6 - The Unlit Lamp\t0\t0.708\t0.276\t0.935\t0.738\t0.108\t0.479\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 6 - The Unlit Lamp\t0\t0.708\t0.276\t0.935\t0.738\t0.108\t0.479\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 6 - The Unlit Lamp\t0\t0.708\t0.276\t0.935\t0.738\t0.108\t0.479\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 101 - The Unlit Lamp\t0\t0.674\t0.306\t0.949\t0.755\t0.204\t0.419\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 101 - The Unlit Lamp\t0\t0.674\t0.306\t0.949\t0.755\t0.204\t0.419\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 101 - The Unlit Lamp\t0\t0.674\t0.306\t0.949\t0.755\t0.204\t0.419\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nElle a perdu son pantalon\t0\t0.737\t0.267\t0.0921\t0.975\t0.265\t0.937\t1924\t['Fred Gouin']\tFred Gouin\nChapter 56 - The Unlit Lamp\t0\t0.652\t0.346\t0.939\t0.717\t0.372\t0.362\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 56 - The Unlit Lamp\t0\t0.652\t0.346\t0.939\t0.717\t0.372\t0.362\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 56 - The Unlit Lamp\t0\t0.652\t0.346\t0.939\t0.717\t0.372\t0.362\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nPassons la monnaie\t0\t0.553\t0.374\t0.329\t0.991\t0.159\t0.513\t1924\t['Georgius']\tGeorgius\nJug Band Blues - Remastered\t0\t0.507\t0.292\t0.0782\t0.996\t0.301\t0.627\t1924\t['Sara Martin & Her Jug Band']\tSara Martin & Her Jug Band\nL'âme des roses\t0\t0.318\t0.315\t0.0772\t0.99\t0.298\t0.501\t1924\t['René De Buxeuil']\tRené De Buxeuil\nLa Madrecita - Remasterizado\t0\t0.374\t0.458\t0.0369\t0.995\t0.422\t0.693\t1924\t['Francisco Canaro']\tFrancisco Canaro\nJ'ai eu tort\t0\t0.629\t0.262\t0.064\t0.995\t0.127\t0.805\t1924\t['Dranem']\tDranem\nChapter 62 - The Unlit Lamp\t0\t0.618\t0.326\t0.945\t0.689\t0.0867\t0.418\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 62 - The Unlit Lamp\t0\t0.618\t0.326\t0.945\t0.689\t0.0867\t0.418\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 62 - The Unlit Lamp\t0\t0.618\t0.326\t0.945\t0.689\t0.0867\t0.418\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nJuventud - Remasterizado\t0\t0.494\t0.232\t0.175\t0.996\t0.174\t0.541\t1924\t['Francisco Canaro']\tFrancisco Canaro\nChapter 2 - The Unlit Lamp\t0\t0.628\t0.334\t0.953\t0.697\t0.0992\t0.369\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 2 - The Unlit Lamp\t0\t0.628\t0.334\t0.953\t0.697\t0.0992\t0.369\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 2 - The Unlit Lamp\t0\t0.628\t0.334\t0.953\t0.697\t0.0992\t0.369\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nThe Slave of Love\t0\t0.334\t0.382\t0.0393\t0.995\t0.114\t0.556\t1924\t['George Olsen']\tGeorge Olsen\nUp and Down, Up and Down (I Will Lead Them Up and Down) [Puck]\t0\t0.602\t0.333\t0.0284\t0.784\t0.127\t0.617\t1924\t['Duke Ellington']\tDuke Ellington\nChapter 200 - The Unlit Lamp\t0\t0.722\t0.281\t0.925\t0.741\t0.204\t0.48\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 200 - The Unlit Lamp\t0\t0.722\t0.281\t0.925\t0.741\t0.204\t0.48\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 200 - The Unlit Lamp\t0\t0.722\t0.281\t0.925\t0.741\t0.204\t0.48\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 141 - The Unlit Lamp\t0\t0.716\t0.32\t0.908\t0.598\t0.0957\t0.324\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 141 - The Unlit Lamp\t0\t0.716\t0.32\t0.908\t0.598\t0.0957\t0.324\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 141 - The Unlit Lamp\t0\t0.716\t0.32\t0.908\t0.598\t0.0957\t0.324\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nSolita - Remasterizado\t0\t0.725\t0.284\t0.0691\t0.996\t0.223\t0.803\t1924\t['Francisco Canaro']\tFrancisco Canaro\nMameluke - Remasterizado\t0\t0.653\t0.251\t0.0681\t0.996\t0.114\t0.7\t1924\t['Francisco Canaro']\tFrancisco Canaro\nCotillón - Remasterizado\t0\t0.225\t0.432\t0.058\t0.995\t0.193\t0.705\t1924\t['Francisco Canaro']\tFrancisco Canaro\nChapter 28 - The Unlit Lamp\t0\t0.681\t0.344\t0.919\t0.647\t0.374\t0.444\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 28 - The Unlit Lamp\t0\t0.681\t0.344\t0.919\t0.647\t0.374\t0.444\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 28 - The Unlit Lamp\t0\t0.681\t0.344\t0.919\t0.647\t0.374\t0.444\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice\nChapter 202 - The Unlit Lamp\t0\t0.715\t0.306\t0.924\t0.735\t0.108\t0.347\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tRadclyffe Hall\nChapter 202 - The Unlit Lamp\t0\t0.715\t0.306\t0.924\t0.735\t0.108\t0.347\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tAlice White\nChapter 202 - The Unlit Lamp\t0\t0.715\t0.306\t0.924\t0.735\t0.108\t0.347\t1924\t['Radclyffe Hall', 'Alice White', 'Synthesized Voice']\tSynthesized Voice"
+          },
+          {
+            "type": "HTML",
+            "data": "<div class=\"result-alert alert-warning\" role=\"alert\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button><strong>Output is truncated</strong> to 102400 bytes. Learn more about <strong>ZEPPELIN_INTERPRETER_OUTPUT_LIMIT</strong></div>"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=2",
+              "$$hashKey": "object:2044"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528252_1368815308",
+      "id": "20210420-213050_1686734647",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "dateStarted": "2022-11-15T13:44:52+0300",
+      "dateFinished": "2022-11-15T13:44:58+0300",
+      "status": "FINISHED",
+      "$$hashKey": "object:1393"
+    },
+    {
+      "title": "1. Как менялись аудиохарактеристики песен с годами? Имеются в виду “acousticness”,“danceability”,“energy”,“speechiness”,“liveness”,“valence”",
+      "text": "%md\n\nДля ответа на этот вопрос построим столбчатые диаграммы со среднем значением аудиохарактеристик песен по годам.\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-15T12:45:56+0300",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Для ответа на этот вопрос построим столбчатые диаграммы со среднем значением аудиохарактеристик песен по годам.</p>\n\n</div>"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_1113384630",
+      "id": "20210420-204357_1798304828",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "status": "READY",
+      "$$hashKey": "object:1394"
+    },
+    {
+      "title": "Как менялись аудиохарактеристики песен с годами",
+      "text": "%pyspark\nfrom pyspark.sql.functions import mean, round\n\n\nz.show(tracks_exp \\\n.select(\"release_year\",\"acousticness\",\"danceability\",\"energy\",\"speechiness\",\"liveness\",\"valence\") \\\n.groupBy(\"release_year\").agg(round(mean(\"acousticness\"),2).alias(\"acousticness\"), \n                                round(mean(\"danceability\"),2).alias(\"danceability\"),\n                                round(mean(\"energy\"),2).alias(\"energy\"),\n                                round(mean(\"speechiness\"),2).alias(\"speechiness\"),\n                                round(mean(\"liveness\"),2).alias(\"liveness\"),\n                                round(mean(\"valence\"),2).alias(\"valence\"),) \\\n.orderBy(\"release_year\")\n\n)",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-15T13:45:03+0300",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "title": true,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "lineChart",
+              "height": 300,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "release_year": "string",
+                      "danceability": "string",
+                      "acousticness": "string",
+                      "energy": "string",
+                      "speechiness": "string",
+                      "liveness": "string",
+                      "valence": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                },
+                "lineChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                },
+                "multiBarChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                }
+              },
+              "commonSetting": {},
+              "keys": [
+                {
+                  "name": "release_year",
+                  "index": 0,
+                  "aggr": "sum"
+                }
+              ],
+              "groups": [],
+              "values": [
+                {
+                  "name": "valence",
+                  "index": 6,
+                  "aggr": "sum"
+                },
+                {
+                  "name": "energy",
+                  "index": 3,
+                  "aggr": "sum"
+                },
+                {
+                  "name": "speechiness",
+                  "index": 4,
+                  "aggr": "sum"
+                },
+                {
+                  "name": "liveness",
+                  "index": 5,
+                  "aggr": "sum"
+                }
+              ]
+            },
+            "helium": {}
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "release_year\tacousticness\tdanceability\tenergy\tspeechiness\tliveness\tvalence\n1900\t0.14\t0.66\t0.79\t0.03\t0.16\t0.96\n1922\t0.91\t0.53\t0.36\t0.19\t0.25\t0.59\n1923\t0.86\t0.63\t0.27\t0.53\t0.22\t0.67\n1924\t0.81\t0.62\t0.34\t0.55\t0.19\t0.51\n1925\t0.91\t0.61\t0.27\t0.29\t0.26\t0.63\n1926\t0.72\t0.63\t0.24\t0.46\t0.21\t0.5\n1927\t0.92\t0.62\t0.27\t0.31\t0.19\t0.64\n1928\t0.95\t0.5\t0.22\t0.12\t0.18\t0.47\n1929\t0.95\t0.59\t0.31\t0.12\t0.2\t0.62\n1930\t0.93\t0.52\t0.32\t0.12\t0.23\t0.57\n1931\t0.9\t0.52\t0.28\t0.14\t0.23\t0.54\n1932\t0.84\t0.58\t0.32\t0.29\t0.21\t0.58\n1933\t0.91\t0.57\t0.31\t0.09\t0.2\t0.59\n1934\t0.91\t0.54\t0.31\t0.1\t0.2\t0.56\n1935\t0.88\t0.48\t0.26\t0.23\t0.22\t0.45\n1936\t0.65\t0.61\t0.3\t0.52\t0.21\t0.58\n1937\t0.92\t0.53\t0.31\t0.08\t0.21\t0.56\n1938\t0.95\t0.45\t0.32\t0.1\t0.27\t0.48\n1939\t0.92\t0.53\t0.31\t0.13\t0.24\t0.59\n1940\t0.93\t0.48\t0.32\t0.09\t0.23\t0.55\n1941\t0.93\t0.48\t0.25\t0.09\t0.21\t0.46\n1942\t0.91\t0.45\t0.23\t0.09\t0.21\t0.42\n1943\t0.92\t0.47\t0.28\t0.11\t0.23\t0.51\n1944\t0.91\t0.51\t0.25\t0.18\t0.23\t0.52\n1945\t0.92\t0.44\t0.24\t0.1\t0.21\t0.44\n1946\t0.94\t0.41\t0.21\t0.08\t0.21\t0.38\n1947\t0.92\t0.46\t0.25\t0.1\t0.22\t0.48\n1948\t0.94\t0.4\t0.23\t0.08\t0.22\t0.38\n1949\t0.9\t0.42\t0.25\t0.11\t0.21\t0.4\n1950\t0.85\t0.48\t0.28\t0.21\t0.22\t0.49\n1951\t0.89\t0.44\t0.26\t0.14\t0.23\t0.4\n1952\t0.9\t0.41\t0.25\t0.1\t0.22\t0.37\n1953\t0.91\t0.39\t0.24\t0.09\t0.23\t0.33\n1954\t0.88\t0.43\t0.25\t0.12\t0.25\t0.38\n1955\t0.9\t0.44\t0.25\t0.1\t0.23\t0.39\n1956\t0.85\t0.47\t0.29\t0.13\t0.22\t0.48\n1957\t0.83\t0.48\t0.29\t0.07\t0.2\t0.51\n1958\t0.84\t0.46\t0.28\t0.09\t0.22\t0.45\n1959\t0.83\t0.45\t0.3\t0.07\t0.21\t0.45\n1960\t0.77\t0.48\t0.32\t0.11\t0.21\t0.49\n1961\t0.82\t0.46\t0.31\t0.07\t0.21\t0.48\n1962\t0.78\t0.47\t0.33\t0.1\t0.22\t0.5\n1963\t0.79\t0.47\t0.34\t0.06\t0.21\t0.52\n1964\t0.77\t0.48\t0.36\t0.06\t0.22\t0.54\n1965\t0.73\t0.47\t0.39\t0.07\t0.22\t0.54\n1966\t0.65\t0.49\t0.42\t0.06\t0.21\t0.57\n1967\t0.62\t0.5\t0.43\t0.08\t0.21\t0.56\n1968\t0.59\t0.5\t0.45\t0.09\t0.23\t0.57\n1969\t0.57\t0.49\t0.45\t0.07\t0.21\t0.55\n1970\t0.56\t0.5\t0.47\t0.08\t0.22\t0.57\n1971\t0.56\t0.49\t0.47\t0.08\t0.22\t0.56\n1972\t0.59\t0.51\t0.46\t0.12\t0.23\t0.56\n1973\t0.55\t0.51\t0.49\t0.14\t0.23\t0.56\n1974\t0.55\t0.51\t0.48\t0.11\t0.22\t0.57\n1975\t0.53\t0.52\t0.48\t0.12\t0.22\t0.56\n1976\t0.53\t0.51\t0.49\t0.08\t0.22\t0.56\n1977\t0.52\t0.53\t0.48\t0.15\t0.23\t0.56\n1978\t0.49\t0.53\t0.51\t0.12\t0.23\t0.58\n1979\t0.46\t0.56\t0.53\t0.15\t0.23\t0.6\n1980\t0.46\t0.55\t0.52\t0.16\t0.23\t0.58\n1981\t0.45\t0.55\t0.52\t0.15\t0.23\t0.59\n1982\t0.45\t0.56\t0.52\t0.16\t0.23\t0.58\n1983\t0.45\t0.55\t0.5\t0.14\t0.23\t0.56\n1984\t0.44\t0.57\t0.53\t0.19\t0.24\t0.56\n1985\t0.43\t0.56\t0.53\t0.14\t0.22\t0.56\n1986\t0.44\t0.56\t0.53\t0.13\t0.23\t0.57\n1987\t0.42\t0.55\t0.53\t0.11\t0.21\t0.55\n1988\t0.44\t0.54\t0.52\t0.12\t0.22\t0.55\n1989\t0.43\t0.56\t0.52\t0.13\t0.23\t0.56\n1990\t0.42\t0.55\t0.54\t0.08\t0.22\t0.56\n1991\t0.42\t0.56\t0.53\t0.1\t0.21\t0.56\n1992\t0.4\t0.56\t0.54\t0.11\t0.22\t0.56\n1993\t0.41\t0.57\t0.53\t0.08\t0.21\t0.58\n1994\t0.39\t0.57\t0.54\t0.1\t0.21\t0.56\n1995\t0.39\t0.56\t0.55\t0.1\t0.21\t0.56\n1996\t0.38\t0.57\t0.56\t0.1\t0.22\t0.56\n1997\t0.37\t0.58\t0.58\t0.11\t0.22\t0.57\n1998\t0.35\t0.58\t0.6\t0.1\t0.22\t0.57\n1999\t0.37\t0.58\t0.6\t0.1\t0.22\t0.56\n2000\t0.33\t0.59\t0.62\t0.09\t0.22\t0.57\n2001\t0.33\t0.59\t0.63\t0.08\t0.21\t0.57\n2002\t0.35\t0.59\t0.62\t0.1\t0.21\t0.56\n2003\t0.34\t0.59\t0.62\t0.09\t0.21\t0.56\n2004\t0.31\t0.59\t0.65\t0.09\t0.22\t0.57\n2005\t0.31\t0.59\t0.65\t0.08\t0.21\t0.56\n2006\t0.31\t0.6\t0.65\t0.09\t0.21\t0.57\n2007\t0.32\t0.59\t0.65\t0.09\t0.22\t0.55\n2008\t0.32\t0.6\t0.66\t0.09\t0.21\t0.57\n2009\t0.31\t0.6\t0.67\t0.09\t0.21\t0.56\n2010\t0.3\t0.61\t0.65\t0.08\t0.21\t0.55\n2011\t0.29\t0.6\t0.67\t0.08\t0.21\t0.55\n2012\t0.28\t0.6\t0.68\t0.09\t0.22\t0.54\n2013\t0.26\t0.6\t0.68\t0.09\t0.21\t0.52\n2014\t0.28\t0.6\t0.67\t0.09\t0.22\t0.52\n2015\t0.3\t0.6\t0.65\t0.09\t0.22\t0.5\n2016\t0.27\t0.61\t0.67\t0.1\t0.22\t0.49\n2017\t0.27\t0.63\t0.67\t0.11\t0.21\t0.5\n2018\t0.27\t0.64\t0.67\t0.12\t0.2\t0.49\n2019\t0.28\t0.66\t0.65\t0.12\t0.19\t0.5\n2020\t0.26\t0.67\t0.65\t0.12\t0.19\t0.51\n2021\t0.27\t0.68\t0.63\t0.13\t0.17\t0.51\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=3",
+              "$$hashKey": "object:2130"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_536652722",
+      "id": "20210423-005302_107864551",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "dateStarted": "2022-11-15T13:45:03+0300",
+      "dateFinished": "2022-11-15T13:45:12+0300",
+      "status": "FINISHED",
+      "$$hashKey": "object:1395"
+    },
+    {
+      "title": "2. Как изменялось с годами “производительность” артистов (количество песен, выпущенных за определенное время)?",
+      "text": "%md\n\n2.1 Количество песен на одного артиста\n2.2 Количество песен в год у всех артистов",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-15T12:12:08+0300",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>2.1 Количество песен на одного артиста<br />\n2.2 Количество песен в год у всех артистов</p>\n\n</div>"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_570057047",
+      "id": "20210423-005328_1997827377",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "status": "READY",
+      "$$hashKey": "object:1396"
+    },
+    {
+      "title": "2.1  Сколько песен в год приходится на одного артиста?",
+      "text": "%pyspark\nfrom pyspark.sql.functions import countDistinct, expr, sum, round\n\nz.show(tracks_exp \\\n.groupBy(\"release_year\").agg(countDistinct(\"name\").alias(\"tracks_count\"), \n                                countDistinct(\"name_artist\").alias(\"artist_count\")) \\\n.withColumn(\"tracks_per_artist\", round(expr(\"tracks_count/artist_count\"),2))\n\n)\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-15T13:21:02+0300",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "editorHide": false,
+        "title": true,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "lineChart",
+              "height": 300,
+              "optionOpen": false,
+              "setting": {
+                "multiBarChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                },
+                "lineChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                },
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "release_year": "string",
+                      "tracks_count": "string",
+                      "artist_count": "string",
+                      "tracks_per_artist": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {},
+              "keys": [
+                {
+                  "name": "release_year",
+                  "index": 0,
+                  "aggr": "sum"
+                }
+              ],
+              "groups": [],
+              "values": [
+                {
+                  "name": "tracks_per_artist",
+                  "index": 3,
+                  "aggr": "sum"
+                }
+              ]
+            },
+            "helium": {}
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "release_year\ttracks_count\tartist_count\ttracks_per_artist\n1959\t4006\t1059\t3.78\n1990\t9693\t2955\t3.28\n1975\t6256\t1617\t3.87\n1977\t6078\t1575\t3.86\n1924\t618\t73\t8.47\n2003\t7757\t3987\t1.95\n2007\t8244\t4565\t1.81\n2018\t10255\t7518\t1.36\n1974\t5953\t1567\t3.8\n2015\t9804\t6299\t1.56\n1927\t1153\t198\t5.82\n1955\t3651\t1078\t3.39\n2006\t8135\t4487\t1.81\n1978\t6100\t1729\t3.53\n1925\t704\t154\t4.57\n1961\t4292\t1182\t3.63\n2013\t9685\t6108\t1.59\n1942\t1529\t464\t3.3\n1939\t1476\t441\t3.35\n1944\t1105\t294\t3.76\n1922\t270\t59\t4.58\n1952\t2366\t779\t3.04\n1934\t877\t235\t3.73\n1956\t3471\t857\t4.05\n1988\t8510\t2533\t3.36\n1997\t11747\t4393\t2.67\n1994\t10246\t3586\t2.86\n1968\t4875\t1259\t3.87\n2014\t10298\t6697\t1.54\n1951\t2388\t803\t2.97\n1930\t1519\t442\t3.44\n1938\t1144\t323\t3.54\n1973\t5350\t1418\t3.77\n1979\t6472\t1751\t3.7\n1946\t1918\t541\t3.55\n1947\t1787\t612\t2.92\n2019\t11047\t8167\t1.35\n1971\t5110\t1334\t3.83\n1950\t2922\t1008\t2.9\n1949\t1971\t803\t2.45\n1966\t2424\t746\t3.25\n2004\t8647\t4289\t2.02\n1991\t9405\t3020\t3.11\n1967\t4528\t1046\t4.33\n1969\t4810\t1201\t4.0\n1982\t7151\t1863\t3.84\n1932\t1044\t336\t3.11\n1945\t1540\t551\t2.79\n1957\t3307\t863\t3.83\n1943\t998\t376\t2.65\n1989\t9306\t2689\t3.46\n1996\t11555\t4363\t2.65\n1998\t11958\t4664\t2.56\n1963\t4018\t995\t4.04\n1965\t4784\t1157\t4.13\n1985\t7489\t2046\t3.66\n2020\t12823\t9425\t1.36\n1960\t4564\t1227\t3.72\n1926\t1191\t89\t13.38\n1970\t5104\t1310\t3.9\n2012\t8879\t5374\t1.65\n1987\t8010\t2325\t3.45\n1923\t649\t66\t9.83\n1941\t1402\t356\t3.94\n2009\t8940\t5281\t1.69\n1936\t1515\t200\t7.58\n2016\t10176\t6863\t1.48\n1995\t11046\t4107\t2.69\n1931\t920\t137\t6.72\n1937\t1171\t324\t3.61\n1980\t7732\t1860\t4.16\n1953\t2709\t903\t3.0\n2001\t6902\t3419\t2.02\n1972\t5635\t1511\t3.73\n1958\t3960\t1020\t3.88\n1992\t9632\t3072\t3.14\n1983\t6679\t1822\t3.67\n1954\t3226\t1066\t3.03\n2005\t8284\t4392\t1.89\n1935\t1375\t347\t3.96\n1984\t7383\t1919\t3.85\n1964\t4386\t1013\t4.33\n2000\t7252\t3593\t2.02\n1981\t7319\t1848\t3.96\n2010\t8877\t5144\t1.73\n1986\t8481\t2287\t3.71\n2011\t9002\t5559\t1.62\n1976\t5719\t1693\t3.38\n1940\t1735\t538\t3.22\n2008\t9060\t4739\t1.91\n2017\t9302\t6851\t1.36\n1948\t1838\t514\t3.58\n1999\t11946\t4750\t2.51\n1962\t4573\t1143\t4.0\n2002\t8485\t4042\t2.1\n1929\t1068\t212\t5.04\n1900\t1\t1\t1.0\n1928\t1153\t271\t4.25\n1933\t1042\t153\t6.81\n2021\t4619\t3568\t1.29\n1993\t6788\t2693\t2.52\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_287267484",
+      "id": "20210423-005439_2012032704",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "status": "READY",
+      "$$hashKey": "object:1397"
+    },
+    {
+      "title": "Количество песен в год у всех артистов ",
+      "text": "%pyspark\n\nz.show(tracks_exp \\\n.groupBy(\"release_year\").agg(countDistinct(\"name\").alias(\"tracks_count\"))\n)",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-15T13:22:53+0300",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "editorHide": false,
+        "title": true,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "lineChart",
+              "height": 300,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "release_year": "string",
+                      "tracks_count": "string",
+                      "artists_count": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                },
+                "lineChart": {
+                  "rotate": {
+                    "degree": "-45"
+                  },
+                  "xLabelStatus": "default"
+                }
+              },
+              "commonSetting": {},
+              "keys": [
+                {
+                  "name": "release_year",
+                  "index": 0,
+                  "aggr": "sum"
+                }
+              ],
+              "groups": [],
+              "values": [
+                {
+                  "name": "tracks_count",
+                  "index": 1,
+                  "aggr": "sum"
+                }
+              ]
+            },
+            "helium": {}
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "release_year\ttracks_count\n1959\t4006\n1990\t9693\n1975\t6256\n1977\t6078\n1924\t618\n2003\t7757\n2007\t8244\n2018\t10255\n1974\t5953\n2015\t9804\n1927\t1153\n1955\t3651\n2006\t8135\n1978\t6100\n1925\t704\n1961\t4292\n2013\t9685\n1942\t1529\n1939\t1476\n1944\t1105\n1922\t270\n1952\t2366\n1956\t3471\n1934\t877\n1988\t8510\n1997\t11747\n1994\t10246\n1968\t4875\n2014\t10298\n1951\t2388\n1930\t1519\n1938\t1144\n1973\t5350\n1979\t6472\n1946\t1918\n1947\t1787\n2019\t11047\n1971\t5110\n1950\t2922\n1949\t1971\n1966\t2424\n2004\t8647\n1991\t9405\n1967\t4528\n1969\t4810\n1982\t7151\n1932\t1044\n1945\t1540\n1957\t3307\n1989\t9306\n1996\t11555\n1943\t998\n1998\t11958\n1963\t4018\n1965\t4784\n1985\t7489\n2020\t12823\n1960\t4564\n1926\t1191\n1970\t5104\n2012\t8879\n1987\t8010\n1923\t649\n1941\t1402\n2009\t8940\n2016\t10176\n1936\t1515\n1995\t11046\n1937\t1171\n1931\t920\n1980\t7732\n1953\t2709\n2001\t6902\n1972\t5635\n1958\t3960\n1992\t9632\n1983\t6679\n1954\t3226\n2005\t8284\n1935\t1375\n1984\t7383\n1964\t4386\n2000\t7252\n1981\t7319\n2010\t8877\n1986\t8481\n2011\t9002\n1976\t5719\n1940\t1735\n2008\t9060\n2017\t9302\n1948\t1838\n1999\t11946\n1962\t4573\n2002\t8485\n1929\t1068\n1900\t1\n1928\t1153\n1933\t1042\n2021\t4619\n1993\t6788\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=30",
+              "$$hashKey": "object:2256"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=31",
+              "$$hashKey": "object:2257"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=32",
+              "$$hashKey": "object:2258"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=33",
+              "$$hashKey": "object:2259"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=34",
+              "$$hashKey": "object:2260"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_298084104",
+      "id": "20210423-005515_1904990370",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "dateStarted": "2022-11-15T13:22:53+0300",
+      "dateFinished": "2022-11-15T13:22:57+0300",
+      "status": "FINISHED",
+      "$$hashKey": "object:1398"
+    },
+    {
+      "title": "3. Какие артисты выпустили наибольшее число песен из годового топ-100 (по популярности)?",
+      "text": "%pyspark\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.functions import row_number\n\nwindowSpec  = Window.partitionBy(\"release_year\").orderBy(tracks_exp[\"popularity\"].desc())\n\ntracks_exp \\\n.select(\"release_year\",\"popularity\",\"name_artist\", \"name\") \\\n.withColumn(\"row_number\",row_number().over(windowSpec)) \\\n.filter(\"row_number <= 100\") \\\n.groupBy(\"name_artist\").count() \\\n.orderBy(\"count\", ascending=False) \\\n.show(truncate=False)\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-15T15:15:19+0300",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+------------------------------+-----+\n|name_artist                   |count|\n+------------------------------+-----+\n|Billie Holiday                |120  |\n|The Beatles                   |109  |\n|Frank Sinatra                 |100  |\n|Louis Armstrong               |78   |\n|Fats Waller                   |72   |\n|Louis Armstrong & His Hot Five|71   |\n|Benny Goodman                 |66   |\n|Bix Beiderbecke               |57   |\n|Doris Day                     |52   |\n|Teddy Wilson                  |50   |\n|Peggy Lee                     |47   |\n|Queen                         |46   |\n|Bing Crosby                   |46   |\n|Dale Carnegie                 |45   |\n|Till Hagen                    |44   |\n|Vladimir Horowitz             |44   |\n|Stefan Kaminski               |44   |\n|Bessie Smith                  |43   |\n|Frédéric Chopin               |40   |\n|Ella Fitzgerald               |39   |\n+------------------------------+-----+\nonly showing top 20 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=36",
+              "$$hashKey": "object:2322"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_1339735139",
+      "id": "20210423-005618_2040758909",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "dateStarted": "2022-11-15T15:15:19+0300",
+      "dateFinished": "2022-11-15T15:15:22+0300",
+      "status": "FINISHED",
+      "$$hashKey": "object:1399"
+    },
+    {
+      "title": "4. Какие артисты чаще других попадали в годовой топ-100 песен по популярности?",
+      "text": "%pyspark\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.functions import row_number\nfrom pyspark.sql.functions import count\n\nwindowSpec  = Window.partitionBy(\"release_year\").orderBy(tracks_exp[\"popularity\"].desc())\nwindowSpec1  = Window.partitionBy(\"release_year\", \"name_artist\")\n\ntracks_exp \\\n.select(\"release_year\",\"popularity\",\"name_artist\",\"name\") \\\n.withColumn(\"row_number\",row_number().over(windowSpec)) \\\n.filter(\"row_number <= 100\") \\\n.select(\"release_year\",\"name_artist\") \\\n.withColumn(\"count_artist\",count(\"name_artist\").over(windowSpec1)) \\\n.distinct() \\\n.groupBy(\"name_artist\").count() \\\n.orderBy(\"count\", ascending=False) \\\n.show(100, truncate=False)\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-15T16:41:23+0300",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+------------------------+-----+\n|name_artist             |count|\n+------------------------+-----+\n|Frank Sinatra           |23   |\n|Johnny Cash             |15   |\n|Ella Fitzgerald         |14   |\n|Louis Armstrong         |14   |\n|Elvis Presley           |13   |\n|Stevie Wonder           |12   |\n|Peggy Lee               |12   |\n|Queen                   |12   |\n|Lata Mangeshkar         |12   |\n|Elton John              |12   |\n|Billie Holiday          |12   |\n|David Bowie             |11   |\n|Dean Martin             |11   |\n|Drake                   |11   |\n|The Rolling Stones      |11   |\n|The Beatles             |10   |\n|Kanye West              |10   |\n|Benny Goodman           |10   |\n|Eminem                  |10   |\n|Rihanna                 |10   |\n|James Piano Bar         |10   |\n|KISS                    |10   |\n|AC/DC                   |9    |\n|Snoop Dogg              |9    |\n|Nat King Cole           |9    |\n|Luis Miguel             |9    |\n|Bob Dylan               |9    |\n|Bob Marley & The Wailers|8    |\n|Nate Dogg               |8    |\n|Duke Ellington          |8    |\n|Lil Wayne               |8    |\n|Nina Simone             |8    |\n|JAY-Z                   |8    |\n|Stan Getz               |8    |\n|Rod Stewart             |8    |\n|Coldplay                |8    |\n|Maroon 5                |8    |\n|Doris Day               |8    |\n|Bee Gees                |8    |\n|Justin Bieber           |8    |\n|Marvin Gaye             |8    |\n|Britney Spears          |8    |\n|The Beach Boys          |7    |\n|Mariah Carey            |7    |\n|Billy Joel              |7    |\n|Daryl Hall & John Oates |7    |\n|Led Zeppelin            |7    |\n|Van Morrison            |7    |\n|Bing Crosby             |7    |\n|Sam Cooke               |7    |\n|Mohammed Rafi           |7    |\n|Teddy Wilson            |7    |\n|2Pac                    |7    |\n|Michael Jackson         |7    |\n|Bill Withers            |7    |\n|Patrick Hunt            |7    |\n|ABBA                    |7    |\n|Metallica               |7    |\n|Joan Sebastian          |7    |\n|Frédéric Chopin         |7    |\n|Willie Nelson           |7    |\n|José José               |7    |\n|The Isley Brothers      |7    |\n|U2                      |6    |\n|Hank Williams           |6    |\n|The Weeknd              |6    |\n|Justin Timberlake       |6    |\n|Pink Floyd              |6    |\n|Count Basie             |6    |\n|Neil Young              |6    |\n|P!nk                    |6    |\n|Soda Stereo             |6    |\n|Alicia Keys             |6    |\n|Travis Scott            |6    |\n|Ed Sheeran              |6    |\n|Vladimir Horowitz       |6    |\n|Aerosmith               |6    |\n|Christina Aguilera      |6    |\n|Flo Rida                |6    |\n|Taylor Swift            |6    |\n|The Cure                |6    |\n|Bon Jovi                |6    |\n|Umm Kulthum             |6    |\n|Giacomo Puccini         |6    |\n|James Taylor            |6    |\n|Kenny Rogers            |6    |\n|Charles Aznavour        |6    |\n|Linkin Park             |6    |\n|Juan Gabriel            |6    |\n|Shakira                 |6    |\n|Madonna                 |6    |\n|Red Hot Chili Peppers   |6    |\n|Miles Davis             |6    |\n|Daddy Yankee            |6    |\n|John Coltrane           |6    |\n|Mukesh                  |6    |\n|Green Day               |6    |\n|The Temptations         |6    |\n|Phil Collins            |6    |\n|Javier Solís            |6    |\n+------------------------+-----+\nonly showing top 100 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=16",
+              "$$hashKey": "object:2368"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_2049709242",
+      "id": "20210423-005745_1275441197",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "dateStarted": "2022-11-15T16:25:36+0300",
+      "dateFinished": "2022-11-15T16:25:40+0300",
+      "status": "FINISHED",
+      "$$hashKey": "object:1400"
+    },
+    {
+      "title": "5. Какие артисты дольше других держались в ежегодном топ-100 песен по популярности?",
+      "text": "%pyspark\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.functions import row_number\nfrom pyspark.sql.functions import count, collect_list, max, udf\n\nwindowSpec  = Window.partitionBy(\"release_year\").orderBy(tracks_exp[\"popularity\"].desc())\nwindowSpec1  = Window.partitionBy(\"release_year\", \"name_artist\")\nwindowSpec2  = Window.partitionBy(\"name_artist\").orderBy(\"release_year\")\n\n# Функция max_years принимает на вход список и возвращает длину списка, если последний элемент списка равен первому элементу плюс длина списка минус 1, иначе возвращает None\n@udf(returnType=IntegerType())\ndef max_years(lists):\n    L = len(lists)\n    if lists[L-1] == lists[0] + L - 1:\n        return L\n    return None\n\n# Отбираем топ-100 песен за каждый год, оставляем уникальных артистов в каждом году, для каждого артиста составляем список годов, когда они попадали в топ (list_year). \n# К list_year применяем функцию max_years. Удаляем null, группируем по артистам с агрегацией по максимальному кол-ву лет в топе.\n\ntracks_exp \\\n.select(\"release_year\",\"popularity\",\"name_artist\",\"name\") \\\n.withColumn(\"row_number\",row_number().over(windowSpec)) \\\n.filter(\"row_number <= 100\") \\\n.select(\"release_year\",\"name_artist\") \\\n.distinct() \\\n.orderBy(\"name_artist\", \"release_year\") \\\n.withColumn(\"list_year\", collect_list(\"release_year\").over(windowSpec2)) \\\n.withColumn(\"max_years\", max_years(\"list_year\")) \\\n.dropna() \\\n.groupBy(\"name_artist\").agg(max(\"max_years\").alias(\"max_years\")) \\\n.orderBy(\"max_years\", ascending=False) \\\n.show(100, truncate=False)",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-16T16:02:17+0300",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+--------------------------------+---------+\n|name_artist                     |max_years|\n+--------------------------------+---------+\n|The Beatles                     |8        |\n|Elton John                      |7        |\n|Billie Holiday                  |6        |\n|The Beach Boys                  |6        |\n|Teddy Wilson                    |6        |\n|KISS                            |6        |\n|Eagles                          |5        |\n|Billie Eilish                   |5        |\n|Dua Lipa                        |5        |\n|Queen                           |5        |\n|John Coltrane                   |5        |\n|The Doors                       |5        |\n|Flo Rida                        |5        |\n|The Rolling Stones              |5        |\n|Travis Scott                    |5        |\n|Stevie Wonder                   |5        |\n|David Bowie                     |4        |\n|The Kinks                       |4        |\n|The Police                      |4        |\n|Jr.                             |4        |\n|ABBA                            |4        |\n|Bob Dylan                       |4        |\n|Carpenters                      |4        |\n|Neil Diamond                    |4        |\n|Marvin Gaye                     |4        |\n|Bebe Rexha                      |4        |\n|One Direction                   |4        |\n|John Denver                     |4        |\n|Bread                           |4        |\n|J Balvin                        |4        |\n|The Supremes                    |4        |\n|Pitbull                         |4        |\n|Bruno Mars                      |3        |\n|Lana Del Rey                    |3        |\n|Air Supply                      |3        |\n|Rosemary Clooney                |3        |\n|Nicki Minaj                     |3        |\n|Electric Light Orchestra        |3        |\n|The Temptations                 |3        |\n|Ne-Yo                           |3        |\n|Cream                           |3        |\n|Dire Straits                    |3        |\n|Dean Martin                     |3        |\n|The Jackson 5                   |3        |\n|Van Morrison                    |3        |\n|Iron Maiden                     |3        |\n|Soda Stereo                     |3        |\n|The Monkees                     |3        |\n|Ramones                         |3        |\n|Henry Mancini                   |3        |\n|Akon                            |3        |\n|Clifford Brown                  |3        |\n|Bad Bunny                       |3        |\n|Led Zeppelin                    |3        |\n|The Mamas & The Papas           |3        |\n|Mary Ford                       |3        |\n|Roy Orbison                     |3        |\n|Kendrick Lamar                  |3        |\n|Ricardo Arjona                  |3        |\n|The Doobie Brothers             |3        |\n|Creedence Clearwater Revival    |3        |\n|Chuck Berry                     |3        |\n|Bob Marley & The Wailers        |3        |\n|BTS                             |3        |\n|Otis Redding                    |3        |\n|Britney Spears                  |3        |\n|Nat King Cole                   |3        |\n|Styx                            |3        |\n|Boney M.                        |3        |\n|Polo G                          |3        |\n|Lil Peep                        |3        |\n|Nancy Sinatra                   |3        |\n|Swae Lee                        |3        |\n|The Animals                     |3        |\n|Georges Brassens                |3        |\n|SNAP!                           |3        |\n|Joni Mitchell                   |3        |\n|Nelly                           |3        |\n|Juice WRLD                      |3        |\n|KAROL G                         |3        |\n|Marshmello                      |2        |\n|Khalid                          |2        |\n|Al Green                        |2        |\n|Sech                            |2        |\n|Donna Summer                    |2        |\n|Black Sabbath                   |2        |\n|Bone Thugs-N-Harmony            |2        |\n|Colbie Caillat                  |2        |\n|Wiz Khalifa                     |2        |\n|Lil Nas X                       |2        |\n|Eric Clapton                    |2        |\n|Ashanti                         |2        |\n|Soulja Boy                      |2        |\n|Missy Elliott                   |2        |\n|Joel Corry                      |2        |\n|Robert Johnson                  |2        |\n|Hoagy Carmichael & His Orchestra|2        |\n|Maria Callas                    |2        |\n|Lionel Richie                   |2        |\n|Alessia Cara                    |2        |\n+--------------------------------+---------+\nonly showing top 100 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=4",
+              "$$hashKey": "object:2414"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4041/jobs/job?id=5",
+              "$$hashKey": "object:2415"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_307921620",
+      "id": "paragraph_1668441417723_716088386",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "dateStarted": "2022-11-16T16:02:18+0300",
+      "dateFinished": "2022-11-16T16:02:43+0300",
+      "status": "FINISHED",
+      "$$hashKey": "object:1401"
+    },
+    {
+      "title": "6. Для каждой аудиохарактеристики вывести топ 3 артистов по среднему значению каждой аудиохарактеристики его песен. Дополнительно: отнормировать на среднее значение аудиохарактеристики в год выхода песен.",
+      "text": "%pyspark\n\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.functions import mean, round\n\nfor chracteristic in [\"danceability\", \"acousticness\",\"energy\",\"speechiness\",\"liveness\",\"valence\"]:\n\n    windowSpec  = Window.partitionBy(\"name_artist\").orderBy(chracteristic)\n    windowSpec1  = Window.partitionBy(\"release_year\")\n    \n    tracks_exp \\\n    .withColumn(\"mean\", mean(chracteristic).over(windowSpec)) \\\n    .withColumn(\"mean_year\", mean(chracteristic).over(windowSpec1)) \\\n    .withColumn(\"norm_\"+chracteristic+\"_mean\", expr(\"round(mean/mean_year,2)\")) \\\n    .select(\"name_artist\",\"norm_\"+chracteristic+\"_mean\") \\\n    .orderBy(\"norm_\"+chracteristic+\"_mean\", ascending=False) \\\n    .show(3)\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-16T17:31:02+0300",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "title": true,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {
+                    "columns": [
+                      {
+                        "name": "name_artist",
+                        "visible": true,
+                        "width": "*",
+                        "sort": {},
+                        "filters": [
+                          {}
+                        ],
+                        "pinned": ""
+                      },
+                      {
+                        "name": "norm_danceability_mean",
+                        "visible": true,
+                        "width": "*",
+                        "sort": {
+                          "priority": 0,
+                          "direction": "desc"
+                        },
+                        "filters": [
+                          {}
+                        ],
+                        "pinned": ""
+                      },
+                      {
+                        "name": "norm_acousticness_mean",
+                        "visible": true,
+                        "width": "*",
+                        "sort": {},
+                        "filters": [
+                          {}
+                        ],
+                        "pinned": ""
+                      },
+                      {
+                        "name": "norm_energy_mean",
+                        "visible": true,
+                        "width": "*",
+                        "sort": {},
+                        "filters": [
+                          {}
+                        ],
+                        "pinned": ""
+                      },
+                      {
+                        "name": "norm_speechiness_mean",
+                        "visible": true,
+                        "width": "*",
+                        "sort": {},
+                        "filters": [
+                          {}
+                        ],
+                        "pinned": ""
+                      },
+                      {
+                        "name": "norm_liveness_mean",
+                        "visible": true,
+                        "width": "*",
+                        "sort": {},
+                        "filters": [
+                          {}
+                        ],
+                        "pinned": ""
+                      },
+                      {
+                        "name": "norm_valence_mean",
+                        "visible": true,
+                        "width": "*",
+                        "sort": {},
+                        "filters": [
+                          {}
+                        ],
+                        "pinned": ""
+                      }
+                    ],
+                    "scrollFocus": {},
+                    "selection": [],
+                    "grouping": {
+                      "grouping": [],
+                      "aggregations": [],
+                      "rowExpandedStates": {}
+                    },
+                    "treeView": {},
+                    "pagination": {
+                      "paginationCurrentPage": 1,
+                      "paginationPageSize": 250
+                    }
+                  },
+                  "tableColumnTypeState": {
+                    "names": {
+                      "name_artist": "string",
+                      "norm_danceability_mean": "string",
+                      "norm_acousticness_mean": "string",
+                      "norm_energy_mean": "string",
+                      "norm_speechiness_mean": "string",
+                      "norm_liveness_mean": "string",
+                      "norm_valence_mean": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+------------+----------------------+\n| name_artist|norm_danceability_mean|\n+------------+----------------------+\n|    DiegoJHG|                  2.23|\n|Gayla Peevey|                  2.21|\n|   Baba Mama|                  2.17|\n+------------+----------------------+\nonly showing top 3 rows\n\n+--------------+----------------------+\n|   name_artist|norm_acousticness_mean|\n+--------------+----------------------+\n| Miles Patrick|                  3.87|\n|   Katelyn Pid|                  3.87|\n|Laureen Conrad|                  3.87|\n+--------------+----------------------+\nonly showing top 3 rows\n\n+--------------+----------------+\n|   name_artist|norm_energy_mean|\n+--------------+----------------+\n|1943 - Madison|            4.64|\n|         May 6|            4.64|\n|    Local Oafs|            4.28|\n+--------------+----------------+\nonly showing top 3 rows\n\n+--------------+---------------------+\n|   name_artist|norm_speechiness_mean|\n+--------------+---------------------+\n|   James Young|                16.09|\n|     Yogi Bear|                13.66|\n|Manos Katrakis|                13.62|\n+--------------+---------------------+\nonly showing top 3 rows\n\n+------------+------------------+\n| name_artist|norm_liveness_mean|\n+------------+------------------+\n|Ria Bhowmick|              5.68|\n|  Helen Ward|              5.55|\n|Alva & Noemi|              5.29|\n+------------+------------------+\nonly showing top 3 rows\n\n+--------------------+-----------------+\n|         name_artist|norm_valence_mean|\n+--------------------+-----------------+\n|Jazz Majestic Orc...|             2.97|\n|     Udutha Sarojini|             2.96|\n|     Udutha Sarojini|             2.96|\n+--------------------+-----------------+\nonly showing top 3 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=78",
+              "$$hashKey": "object:2465"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=79",
+              "$$hashKey": "object:2466"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=80",
+              "$$hashKey": "object:2467"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=81",
+              "$$hashKey": "object:2468"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=82",
+              "$$hashKey": "object:2469"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=83",
+              "$$hashKey": "object:2470"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_1577287163",
+      "id": "20210423-005830_360023374",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "dateStarted": "2022-11-16T17:31:02+0300",
+      "dateFinished": "2022-11-16T17:31:35+0300",
+      "status": "FINISHED",
+      "$$hashKey": "object:1402"
+    },
+    {
+      "text": "%pyspark\nnorm_tracks_haracter.show()",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-15T12:12:08+0300",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+------------+--------------------+----------+------------+------+-----------+------------+--------+-------+--------------------+--------------------+-----------------+-----------------+-----------+----------------+-------------+------------+-------------------+------------------+------------------+-------------------+-------------------+-------------------+\n|release_year|                name|popularity|danceability|energy|speechiness|acousticness|liveness|valence|             artists|         name_artist|danceability_mean|acousticness_mean|energy_mean|speechiness_mean|liveness_mean|valence_mean|  norm_danceability| norm_acousticness|       norm_energy|   norm_speechiness|      norm_liveness|       norm_valence|\n+------------+--------------------+----------+------------+------+-----------+------------+--------+-------+--------------------+--------------------+-----------------+-----------------+-----------+----------------+-------------+------------+-------------------+------------------+------------------+-------------------+-------------------+-------------------+\n|        1959|     Johnny B. Goode|        77|       0.534| 0.803|     0.0743|       0.741|   0.307|  0.969|     ['Chuck Berry']|         Chuck Berry|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.1866666666666668|0.8927710843373494|2.6766666666666667| 1.0614285714285714|  1.461904761904762| 2.1533333333333333|\n|        1959|            Big Iron|        70|       0.726| 0.474|     0.0491|       0.803|   0.258|   0.57|   ['Marty Robbins']|       Marty Robbins|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.6133333333333333|0.9674698795180724|              1.58| 0.7014285714285713| 1.2285714285714286| 1.2666666666666666|\n|        1959|      Beyond the Sea|        69|       0.521| 0.516|     0.0369|       0.723|   0.257|  0.569|     ['Bobby Darin']|         Bobby Darin|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.1577777777777778|0.8710843373493976|1.7200000000000002| 0.5271428571428571|  1.223809523809524| 1.2644444444444443|\n|        1959|           Take Five|        68|       0.454|  0.26|     0.0401|       0.539|  0.0675|  0.598|['The Dave Brubec...|The Dave Brubeck ...|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45|  1.008888888888889|0.6493975903614458|0.8666666666666667| 0.5728571428571427|0.32142857142857145| 1.3288888888888888|\n|        1959|       Lonesome Town|        67|       0.404| 0.193|     0.0305|       0.794|   0.103|  0.273|    ['Ricky Nelson']|        Ricky Nelson|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 0.8977777777777778|0.9566265060240965|0.6433333333333334|0.43571428571428567|0.49047619047619045| 0.6066666666666667|\n|        1959|La Bamba - Single...|        65|       0.516| 0.809|     0.0545|       0.787|   0.303|  0.939|  ['Ritchie Valens']|      Ritchie Valens|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.1466666666666667|0.9481927710843374|2.6966666666666668| 0.7785714285714285| 1.4428571428571428| 2.0866666666666664|\n|        1959|Blue in Green (fe...|        65|       0.421|0.0162|     0.0388|       0.808|  0.0978|  0.154|['Miles Davis', '...|         Miles Davis|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 0.9355555555555555|0.9734939759036145|             0.054| 0.5542857142857143|0.46571428571428575| 0.3422222222222222|\n|        1959|Blue in Green (fe...|        65|       0.421|0.0162|     0.0388|       0.808|  0.0978|  0.154|['Miles Davis', '...|       John Coltrane|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 0.9355555555555555|0.9734939759036145|             0.054| 0.5542857142857143|0.46571428571428575| 0.3422222222222222|\n|        1959|Blue in Green (fe...|        65|       0.421|0.0162|     0.0388|       0.808|  0.0978|  0.154|['Miles Davis', '...|          Bill Evans|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 0.9355555555555555|0.9734939759036145|             0.054| 0.5542857142857143|0.46571428571428575| 0.3422222222222222|\n|        1959|Smoke Gets In You...|        65|       0.203| 0.295|     0.0323|        0.92|   0.173|  0.285|    ['The Platters']|        The Platters|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45|0.45111111111111113| 1.108433734939759|0.9833333333333333| 0.4614285714285714| 0.8238095238095238| 0.6333333333333333|\n|        1959|What A Diff'rence...|        65|       0.387| 0.117|     0.0299|       0.925|   0.109|  0.166|['Dinah Washington']|    Dinah Washington|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45|               0.86|1.1144578313253013|              0.39| 0.4271428571428571| 0.5190476190476191| 0.3688888888888889|\n|        1959|             El Paso|        63|       0.654| 0.452|       0.03|       0.835|    0.16|  0.691|   ['Marty Robbins']|       Marty Robbins|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.4533333333333334|1.0060240963855422|1.5066666666666668| 0.4285714285714285|  0.761904761904762| 1.5355555555555553|\n|        1959|  A Teenager In Love|        63|       0.555| 0.377|     0.0295|       0.671|   0.128|  0.619|['Dion & The Belm...| Dion & The Belmonts|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.2333333333333334|0.8084337349397591|1.2566666666666668| 0.4214285714285714| 0.6095238095238096| 1.3755555555555554|\n|        1959|   Shout, Pts. 1 & 2|        63|       0.489| 0.866|     0.0933|       0.753|   0.876|  0.416|['The Isley Broth...|  The Isley Brothers|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.0866666666666667|0.9072289156626506|2.8866666666666667| 1.3328571428571427|  4.171428571428572| 0.9244444444444444|\n|        1959|So What (feat. Jo...|        63|       0.532| 0.151|     0.0376|       0.706|   0.116|  0.211|['Miles Davis', '...|         Miles Davis|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.1822222222222223|0.8506024096385542|0.5033333333333333| 0.5371428571428571| 0.5523809523809524|0.46888888888888886|\n|        1959|So What (feat. Jo...|        63|       0.532| 0.151|     0.0376|       0.706|   0.116|  0.211|['Miles Davis', '...|       John Coltrane|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.1822222222222223|0.8506024096385542|0.5033333333333333| 0.5371428571428571| 0.5523809523809524|0.46888888888888886|\n|        1959|So What (feat. Jo...|        63|       0.532| 0.151|     0.0376|       0.706|   0.116|  0.211|['Miles Davis', '...| Cannonball Adderley|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.1822222222222223|0.8506024096385542|0.5033333333333333| 0.5371428571428571| 0.5523809523809524|0.46888888888888886|\n|        1959|So What (feat. Jo...|        63|       0.532| 0.151|     0.0376|       0.706|   0.116|  0.211|['Miles Davis', '...|          Bill Evans|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45| 1.1822222222222223|0.8506024096385542|0.5033333333333333| 0.5371428571428571| 0.5523809523809524|0.46888888888888886|\n|        1959|What'd I Say, Pt....|        63|        0.54| 0.681|     0.0508|       0.808|   0.162|  0.794|     ['Ray Charles']|         Ray Charles|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45|                1.2|0.9734939759036145|2.2700000000000005| 0.7257142857142856| 0.7714285714285715| 1.7644444444444445|\n|        1959|      Mack the Knife|        62|       0.549| 0.529|      0.108|        0.76|   0.206|  0.464|     ['Bobby Darin']|         Bobby Darin|             0.45|             0.83|        0.3|            0.07|         0.21|        0.45|               1.22|0.9156626506024097|1.7633333333333334| 1.5428571428571427| 0.9809523809523809|  1.031111111111111|\n+------------+--------------------+----------+------------+------+-----------+------------+--------+-------+--------------------+--------------------+-----------------+-----------------+-----------+----------------+-------------+------------+-------------------+------------------+------------------+-------------------+-------------------+-------------------+\nonly showing top 20 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_260431879",
+      "id": "20210501-221805_147414712",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "status": "READY",
+      "$$hashKey": "object:1403"
+    },
+    {
+      "title": "7. Как изменилось влияние отдельных аудиохарактеристик на популярность песен в 2010-е годы по сравнению с 1980ми? Возможное решение – посмотроить модель линейной регрессии и посмотреть коэффициенты",
+      "text": "%pyspark\n\nfrom pyspark.ml.regression import LinearRegression\nfrom pyspark.ml.feature import VectorAssembler\n\n#переведем фичи в один вектор\n\nassembler=VectorAssembler(inputCols=['danceability',\n 'acousticness',\n 'energy',\n 'speechiness',\n 'liveness',\n 'valence'],outputCol='features')\noutput=assembler.transform(tracks_exp)\n\nlr = LinearRegression(featuresCol=\"features\", labelCol=\"popularity\")\n\nmodel_1980 = lr.fit(output.filter(\"(release_year >= 1980) and (release_year <= 1989)\"))\nmodel_2010 = lr.fit(output.filter(\"(release_year >= 2010) and (release_year <= 2019)\"))\n\nprint(\"Coefficients 1980's: %s\" % str(model_1980.coefficients))\nprint(\"Coefficients 2010's: %s\" % str(model_2010.coefficients))\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-17T12:25:38+0300",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=12",
+              "$$hashKey": "object:17078"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=13",
+              "$$hashKey": "object:17079"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=14",
+              "$$hashKey": "object:17080"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=15",
+              "$$hashKey": "object:17081"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=16",
+              "$$hashKey": "object:17082"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=17",
+              "$$hashKey": "object:17083"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=18",
+              "$$hashKey": "object:17084"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=19",
+              "$$hashKey": "object:17085"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=20",
+              "$$hashKey": "object:17086"
+            },
+            {
+              "jobUrl": "http://ca-spark-zp-01.innoca.local:4040/jobs/job?id=21",
+              "$$hashKey": "object:17087"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668503528254_308920719",
+      "id": "paragraph_1668441524290_430698634",
+      "dateCreated": "2022-11-15T12:12:08+0300",
+      "status": "FINISHED",
+      "$$hashKey": "object:1404",
+      "dateFinished": "2022-11-17T12:25:42+0300",
+      "dateStarted": "2022-11-17T12:25:38+0300",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Coefficients 1980's: [0.7295011936066157,-6.057637862849761,2.410857143146563,2.7032520758878342,-1.4455934278640958,-4.241216592275735]\nCoefficients 2010's: [20.294517672242172,2.5143832839157048,-7.2937063729887015,5.280837457297933,-10.148896463763787,2.351194769833774]\n"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%md\n\nПоложительные коэффициенты лин регрессии показывают положительное влияние на популярность, отрицательные - негативное влияние. Чем больше значение коэффициента, тем сильнее его влияние. Согласно полученным результатам можно сказать, что в 2010-е годы на популярность большое влияние оказывает danceability, тогда как в 80-е она оказывала незначительное влияние на популярность. Acousticness и valence в 80-е годы оказывали отрицательное влияние на популярность, в 2010-е они позитивно влияют на нее. Energy наоборот в 80-е оказывала положительное влияние, а в 2010 - негативное. Speechiness в обе эпохи вносила положительный вклад в популярность песни, но в 2010-е чуть больше. Liveness же в оба периода оказывала отрицательное влияние, но в 1980-е не такое сильное, как в 2010-е.\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-17T12:16:46+0300",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/markdown",
+        "fontSize": 9,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668675137129_1106015340",
+      "id": "paragraph_1668675137129_1106015340",
+      "dateCreated": "2022-11-17T11:52:17+0300",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:5402",
+      "dateFinished": "2022-11-17T12:16:46+0300",
+      "dateStarted": "2022-11-17T12:16:46+0300",
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "<div class=\"markdown-body\">\n<p>Положительные коэффициенты лин регрессии показывают положительное влияние на популярность, отрицательные - негативное влияние. Чем больше значение коэффициента, тем сильнее его влияние. Согласно полученным результатам можно сказать, что в 2010-е годы на популярность большое влияние оказывает danceability, тогда как в 80-е она оказывала незначительное влияние на популярность. Acousticness и valence в 80-е годы оказывали отрицательное влияние на популярность, в 2010-е они позитивно влияют на нее. Energy наоборот в 80-е оказывала положительное влияние, а в 2010 - негативное. Speechiness в обе эпохи вносила положительный вклад в популярность песни, но в 2010-е чуть больше. Liveness же в оба периода оказывала отрицательное влияние, но в 1980-е не такое сильное, как в 2010-е.</p>\n\n</div>"
+          }
+        ]
+      }
+    },
+    {
+      "text": "%pyspark\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-17T11:52:20+0300",
+      "progress": 0,
+      "config": {
+        "colWidth": 12,
+        "fontSize": 9,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/python"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668675140452_1934140172",
+      "id": "paragraph_1668675140452_1934140172",
+      "dateCreated": "2022-11-17T11:52:20+0300",
+      "status": "READY",
+      "focus": true,
+      "$$hashKey": "object:5540"
+    },
+    {
+      "text": "%pyspark\n",
+      "user": "ylarina",
+      "dateUpdated": "2022-11-17T11:52:21+0300",
+      "progress": 0,
+      "config": {
+        "colWidth": 12,
+        "fontSize": 9,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/python"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1668675141170_477492443",
+      "id": "paragraph_1668675141170_477492443",
+      "dateCreated": "2022-11-17T11:52:21+0300",
+      "status": "READY",
+      "focus": true,
+      "$$hashKey": "object:5609"
+    }
+  ],
+  "name": "7",
+  "id": "2HMX92TH5",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.10.0",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false,
+    "looknfeel": "default",
+    "personalizedMode": "false"
+  },
+  "info": {},
+  "path": "/user/ylarina/homework/7"
+}
